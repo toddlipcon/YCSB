@@ -29,8 +29,10 @@ import com.yahoo.ycsb.generator.UniformIntegerGenerator;
 import com.yahoo.ycsb.generator.ZipfianGenerator;
 import com.yahoo.ycsb.measurements.Measurements;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -48,6 +50,7 @@ import java.util.Vector;
  * <LI><b>updateproportion</b>: what proportion of operations should be updates (default: 0.05)
  * <LI><b>insertproportion</b>: what proportion of operations should be inserts (default: 0)
  * <LI><b>scanproportion</b>: what proportion of operations should be scans (default: 0)
+ * <LI><b>incrementproportion</b>: what proportion of operations should be increments (default: 0)
  * <LI><b>readmodifywriteproportion</b>: what proportion of operations should be read a record, modify it, write it back (default: 0)
  * <LI><b>requestdistribution</b>: what distribution should be used to select the records to operate on - uniform, zipfian or latest (default: uniform)
  * <LI><b>maxscanlength</b>: for scans, what is the maximum number of records to scan (default: 1000)
@@ -160,6 +163,16 @@ public class CoreWorkload extends Workload
 	 */
 	public static final String SCAN_PROPORTION_PROPERTY_DEFAULT="0.0";
 	
+  /**
+	 * The name of the property for the proportion of transactions that are increments.
+	 */
+	public static final String INCREMENT_PROPORTION_PROPERTY="incrementproportion";
+	
+  /**
+	 * The default proportion of transactions that are increments.
+	 */
+	public static final String INCREMENT_PROPORTION_PROPERTY_DEFAULT="0.0";
+
 	/**
 	 * The name of the property for the proportion of transactions that are read-modify-write.
 	 */
@@ -239,6 +252,7 @@ public class CoreWorkload extends Workload
 		double updateproportion=Double.parseDouble(p.getProperty(UPDATE_PROPORTION_PROPERTY,UPDATE_PROPORTION_PROPERTY_DEFAULT));
 		double insertproportion=Double.parseDouble(p.getProperty(INSERT_PROPORTION_PROPERTY,INSERT_PROPORTION_PROPERTY_DEFAULT));
 		double scanproportion=Double.parseDouble(p.getProperty(SCAN_PROPORTION_PROPERTY,SCAN_PROPORTION_PROPERTY_DEFAULT));
+		double incrementproportion=Double.parseDouble(p.getProperty(INCREMENT_PROPORTION_PROPERTY,INCREMENT_PROPORTION_PROPERTY_DEFAULT));
 		double readmodifywriteproportion=Double.parseDouble(p.getProperty(READMODIFYWRITE_PROPORTION_PROPERTY,READMODIFYWRITE_PROPORTION_PROPERTY_DEFAULT));
 		recordcount=Integer.parseInt(p.getProperty(Client.RECORD_COUNT_PROPERTY));
 		String requestdistrib=p.getProperty(REQUEST_DISTRIBUTION_PROPERTY,REQUEST_DISTRIBUTION_PROPERTY_DEFAULT);
@@ -279,6 +293,11 @@ public class CoreWorkload extends Workload
 		if (scanproportion>0)
 		{
 			operationchooser.addValue(scanproportion,"SCAN");
+		}
+		
+    if (incrementproportion>0)
+		{
+			operationchooser.addValue(incrementproportion,"INCREMENT");
 		}
 		
 		if (readmodifywriteproportion>0)
@@ -383,6 +402,10 @@ public class CoreWorkload extends Workload
 		{
 			doTransactionScan(db);
 		}
+    else if (op.compareTo("INCREMENT")==0)
+    {
+      doTransactionIncrement(db);
+    }
 		else
 		{
 			doTransactionReadModifyWrite(db);
@@ -512,6 +535,45 @@ public class CoreWorkload extends Workload
 		}
 
 		db.scan(table,startkeyname,len,fields,new Vector<HashMap<String,String>>());
+	}
+
+  public void doTransactionIncrement(DB db)
+  {
+		//choose a random key
+		int keynum;
+		do
+		{
+			keynum=keychooser.nextInt();
+		}
+		while (keynum>transactioninsertkeysequence.lastInt());
+
+		if (!orderedinserts)
+		{
+			keynum=Utils.hash(keynum);
+		}
+		String keyname="user"+keynum;
+
+    List<String> fields;
+
+		if (writeallfields)
+		{
+       fields = new ArrayList<String>(fieldcount);
+		   //new data for all the fields
+		   for (int i=0; i<fieldcount; i++)
+		   {
+		      String fieldname="field"+i;
+		      fields.add(fieldname);
+		   }
+		}
+		else
+		{
+       fields = new ArrayList<String>(1);
+		   //update a random field
+		   String fieldname="field"+fieldchooser.nextString();
+		   fields.add(fieldname);
+		}
+
+		db.increment(table,keyname, fields);
 	}
 
 	public void doTransactionUpdate(DB db)

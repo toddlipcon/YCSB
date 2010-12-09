@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 //import org.apache.hadoop.hbase.client.Scanner;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Scan;
@@ -321,6 +322,52 @@ public class HBaseClient extends com.yahoo.ycsb.DB
         {
             if (_debug) {
                 System.err.println("Error doing put: "+e);
+            }
+            return ServerError;
+        }
+        catch (ConcurrentModificationException e) 
+        {
+            //do nothing for now...hope this is rare
+            return ServerError;
+        }
+
+        return Ok;
+    }
+    
+    public int increment(String table, String key, List<String> fields)
+    {
+        //if this is a "new" table, init HTable object.  Else, use existing one
+        if (!_table.equals(table)) {
+            _hTable = null;
+            try 
+            {
+                getHTable(table);
+                _table = table;
+            }
+            catch (IOException e) 
+            {
+                System.err.println("Error accessing HBase table: "+e);
+                return ServerError;
+            }
+        }
+
+
+        if (_debug) {
+            System.out.println("Setting up increment for key: "+key);
+        }
+        Increment inc = new Increment(Bytes.toBytes(key));
+        for (String field : fields) {
+          inc.addColumn(_columnFamilyBytes, Bytes.toBytes(field), 1L);
+        }
+
+        try 
+        {
+            _hTable.increment(inc);
+        }
+        catch (IOException e)
+        {
+            if (_debug) {
+                System.err.println("Error doing increment: "+e);
             }
             return ServerError;
         }

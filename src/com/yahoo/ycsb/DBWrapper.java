@@ -18,6 +18,7 @@
 package com.yahoo.ycsb;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -127,6 +128,16 @@ public class DBWrapper extends DB
 		long en=System.currentTimeMillis();
 		_measurements.measure("UPDATE",(int)(en-st));
 		_measurements.reportReturnCode("UPDATE",res);
+		return res;
+	}
+
+	public int increment(String table, String key, List<String> fields)
+	{
+		long st=System.currentTimeMillis();
+		int res=_db.increment(table,key,fields);
+		long en=System.currentTimeMillis();
+		_measurements.measure("INCREMENT",(int)(en-st));
+		_measurements.reportReturnCode("INCREMENT",res);
 		return res;
 	}
 

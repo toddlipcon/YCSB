@@ -17,7 +17,9 @@
 
 package com.yahoo.ycsb;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -114,6 +116,16 @@ public abstract class DB
 	 * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error codes.
 	 */
 	public abstract int update(String table, String key, HashMap<String,String> values);
+	
+  /**
+	 * Increment a record in the database. All fields in the specified array will be incremented by one.
+	 *
+	 * @param table The name of the table
+	 * @param key The record key of the record to write.
+	 * @param fields A list of the fields to increment for the record
+	 * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error codes.
+	 */
+	public abstract int increment(String table, String key, List<String> fields);
 
 	/**
 	 * Insert a record in the database. Any field/value pairs in the specified values HashMap will be written into the record with the specified
