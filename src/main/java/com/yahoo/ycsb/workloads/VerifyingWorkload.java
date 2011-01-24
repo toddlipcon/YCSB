@@ -105,15 +105,15 @@ public class VerifyingWorkload extends CoreWorkload {
   public void doTransactionInsert(DB db) {
     //choose the next key
     int keynum = insertKey.getAndIncrement();
-    if (!orderedInserts) {
+    if (!orderedinserts) {
       keynum = Utils.hash(keynum);
     }
 
     Map<String, String> values = new HashMap<String, String>();
-    for (int i = 0; i < fieldCount; i++) {
-      values.put(String.format("field%05d", i), Utils.testableData(keynum, i, fieldLength));
+    for (int i = 0; i < fieldcount; i++) {
+      values.put(String.format("field%05d", i), Utils.testableData(keynum, i, fieldlength));
     }
-    reportErrorIfAny("insert", db.insert(TABLENAME, "user" + keynum, values));
+    reportErrorIfAny("insert", db.insert(table, "user" + keynum, values));
   }
 
   public void doTransactionRead(DB db) {
@@ -129,9 +129,9 @@ public class VerifyingWorkload extends CoreWorkload {
 
     readAndCheckRecord(db, keyNum, "READ-modify-write");
 
-    if (!readAllFields) {
+    if (!readallfields) {
       //read a random field
-      String fieldname = String.format("field%05d", fieldChooser.nextInt());
+      String fieldname = String.format("field%05d", fieldchooser.nextInt());
 
 
       fields = new HashSet<String>();
@@ -142,18 +142,18 @@ public class VerifyingWorkload extends CoreWorkload {
 
     Map<String, String> values = new HashMap<String, String>();
 
-    if (writeAllFields) {
+    if (writeallfields) {
       //new data for all the fields
-      for (int i = 0; i < fieldCount; i++) {
+      for (int i = 0; i < fieldcount; i++) {
         String fieldName = String.format("field%05d", i);
-        String data = Utils.testableData(keyNum, i, fieldLength);
+        String data = Utils.testableData(keyNum, i, fieldlength);
         values.put(fieldName, data);
       }
     } else {
       //update a random field
-      int fieldNumber = fieldChooser.nextInt();
+      int fieldNumber = fieldchooser.nextInt();
       String fieldName = String.format("field%05d", fieldNumber);
-      String data = Utils.testableData(keyNum, fieldNumber, fieldLength);
+      String data = Utils.testableData(keyNum, fieldNumber, fieldlength);
       values.put(fieldName, data);
     }
 
@@ -161,7 +161,7 @@ public class VerifyingWorkload extends CoreWorkload {
 
     long st = System.currentTimeMillis();
 
-    reportErrorIfAny("read-modify-WRITE", db.update(TABLENAME, keyname, values));
+    reportErrorIfAny("read-modify-WRITE", db.update(table, keyname, values));
 
     long en = System.currentTimeMillis();
 
@@ -174,18 +174,18 @@ public class VerifyingWorkload extends CoreWorkload {
     String startKeyName = "user" + keyNum;
 
     //choose a random scan length
-    int len = scanLength.nextInt();
+    int len = fieldchooser.nextInt();
 
     Set<String> fields = null;
 
-    if (!readAllFields) {
+    if (!readallfields) {
       //read a random field
       fields = new HashSet<String>();
-      fields.add(String.format("field%05d", fieldChooser.nextInt()));
+      fields.add(String.format("field%05d", fieldchooser.nextInt()));
     }
 
     List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-    reportErrorIfAny("scan", db.scan(TABLENAME, startKeyName, len, fields, result));
+    reportErrorIfAny("scan", db.scan(table, startKeyName, len, fields, result));
     for (Map<String, String> row : result) {
       for (String field : row.keySet()) {
         if (!field.matches("field[0-9]+") || !row.get(field).matches("[0-9]+-.*")) {
@@ -202,32 +202,32 @@ public class VerifyingWorkload extends CoreWorkload {
 
     Map<String, String> values = new HashMap<String, String>();
 
-    if (writeAllFields) {
+    if (writeallfields) {
       //new data for all the fields
-      for (int i = 0; i < fieldCount; i++) {
+      for (int i = 0; i < fieldcount; i++) {
         String fieldName = String.format("field%05d", i);
-        String data = Utils.ASCIIString(fieldLength);
+        String data = Utils.ASCIIString(fieldlength);
         values.put(fieldName, data);
       }
     } else {
       //update a random field
-      int fieldNum = fieldChooser.nextInt();
+      int fieldNum = fieldchooser.nextInt();
 
-      values.put(String.format("field%05d", fieldNum), Utils.testableData(keyNum, fieldNum, fieldLength));
+      values.put(String.format("field%05d", fieldNum), Utils.testableData(keyNum, fieldNum, fieldlength));
     }
 
-    reportErrorIfAny("update", db.update(TABLENAME, keyname, values));
+    reportErrorIfAny("update", db.update(table, keyname, values));
   }
 
   private int chooseKey() {
     //choose a random key
     int keyNum;
     do {
-      keyNum = keyChooser.nextInt() % insertKey.get();
+      keyNum = keychooser.nextInt() % insertKey.get();
     }
     while (keyNum < 0 || keyNum > insertKey.get());
 
-    if (!orderedInserts) {
+    if (!orderedinserts) {
       keyNum = Utils.hash(keyNum);
     }
     return keyNum;
@@ -238,14 +238,14 @@ public class VerifyingWorkload extends CoreWorkload {
 
     Set<String> fields = null;
 
-    if (!readAllFields) {
+    if (!readallfields) {
       //read a random field
       fields = new HashSet<String>();
-      fields.add(String.format("field%05d", fieldChooser.nextInt()));
+      fields.add(String.format("field%05d", fieldchooser.nextInt()));
     }
 
     Map<String, String> result = new HashMap<String, String>();
-    int errorCode = db.read(TABLENAME, keyName, fields, result);
+    int errorCode = db.read(table, keyName, fields, result);
 
     if (!verify(keyNum, result, errorCode, type)) {
       throw new DataCorruptionException(String.format("Data corrupted for key %s, value = %s", keyName, result));
