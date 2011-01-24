@@ -17,7 +17,8 @@
 
 package com.yahoo.ycsb.workloads;
 
-import java.util.Properties;
+import java.util.*;
+
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.CounterGenerator;
 import com.yahoo.ycsb.generator.DiscreteGenerator;
@@ -28,10 +29,6 @@ import com.yahoo.ycsb.generator.SkewedLatestGenerator;
 import com.yahoo.ycsb.generator.UniformIntegerGenerator;
 import com.yahoo.ycsb.generator.ZipfianGenerator;
 import com.yahoo.ycsb.measurements.Measurements;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
 
 /**
  * The core benchmark scenario. Represents a set of clients doing simple CRUD operations. The relative 
@@ -216,7 +213,7 @@ public class CoreWorkload extends Workload
 
 	IntegerGenerator keychooser;
 
-	Generator fieldchooser;
+	IntegerGenerator fieldchooser;
 
 	CounterGenerator transactioninsertkeysequence;
 	
@@ -511,7 +508,7 @@ public class CoreWorkload extends Workload
 			fields.add(fieldname);
 		}
 
-		db.scan(table,startkeyname,len,fields,new Vector<HashMap<String,String>>());
+		db.scan(table,startkeyname,len,fields,new ArrayList<Map<String,String>>());
 	}
 
 	public void doTransactionUpdate(DB db)

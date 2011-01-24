@@ -17,10 +17,7 @@
 
 package com.yahoo.ycsb;
 
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * A layer for accessing a database to be benchmarked. Each thread in the client
@@ -90,7 +87,7 @@ public abstract class DB
 	 * @param result A HashMap of field/value pairs for the result
 	 * @return Zero on success, a non-zero error code on error or "not found".
 	 */
-	public abstract int read(String table, String key, Set<String> fields, HashMap<String,String> result);
+	public abstract int read(String table, String key, Set<String> fields, Map<String,String> result);
 
 	/**
 	 * Perform a range scan for a set of records in the database. Each field/value pair from the result will be stored in a HashMap.
@@ -102,7 +99,7 @@ public abstract class DB
 	 * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
 	 * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error codes.
 	 */
-	public abstract int scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String,String>> result);
+	public abstract int scan(String table, String startkey, int recordcount, Set<String> fields, List<Map<String,String>> result);
 	
 	/**
 	 * Update a record in the database. Any field/value pairs in the specified values HashMap will be written into the record with the specified
@@ -113,7 +110,7 @@ public abstract class DB
 	 * @param values A HashMap of field/value pairs to update in the record
 	 * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error codes.
 	 */
-	public abstract int update(String table, String key, HashMap<String,String> values);
+	public abstract int update(String table, String key, Map<String,String> values);
 
 	/**
 	 * Insert a record in the database. Any field/value pairs in the specified values HashMap will be written into the record with the specified
@@ -124,7 +121,7 @@ public abstract class DB
 	 * @param values A HashMap of field/value pairs to insert in the record
 	 * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error codes.
 	 */
-	public abstract int insert(String table, String key, HashMap<String,String> values);
+	public abstract int insert(String table, String key, Map<String,String> values);
 
 	/**
 	 * Delete a record from the database. 

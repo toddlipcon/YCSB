@@ -17,18 +17,13 @@
 
 package com.yahoo.ycsb;
 
-import java.util.Properties;
+import java.util.*;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Vector;
 
+import com.google.common.collect.Lists;
 import com.yahoo.ycsb.workloads.*;
 
 /**
@@ -322,7 +317,7 @@ public class CommandLine
 		     }
 		  }
 		  
-		  Vector<HashMap<String,String>> results=new Vector<HashMap<String,String>>();
+		  List<Map<String,String>> results= Lists.newArrayList();
 		  int ret=db.scan(table,tokens[1],Integer.parseInt(tokens[2]),fields,results);
 		  System.out.println("Return code: "+ret);
 		  int record=0;
@@ -334,7 +329,7 @@ public class CommandLine
 		  {
 		     System.out.println("--------------------------------");
 		  }
-		  for (HashMap<String,String> result : results)
+		  for (Map<String, String> result : results)
 		  {
 		     System.out.println("Record "+(record++));
 		     for (Map.Entry<String,String> ent : result.entrySet())
