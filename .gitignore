@@ -1,6 +1,7 @@
+*.iml
 build
 .classpath
 .project
 .settings
-db/*/lib/*
-
+.idea
+target
