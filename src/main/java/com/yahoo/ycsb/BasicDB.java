@@ -17,7 +17,14 @@
 
 package com.yahoo.ycsb;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.List;
+import java.util.Set;
+import java.util.Enumeration;
+import java.util.Random;
+import java.util.Vector;
 
 
 /**
@@ -181,6 +188,26 @@ public class BasicDB extends DB
 
 		return 0;
 	}
+	
+  public int increment(String table, String key, List<String> fields)
+	{
+		delay();
+
+		if (verbose)
+		{
+			System.out.print("INCREMENT "+table+" "+key+" [ ");
+      if (fields != null)
+      {
+        for (String f : fields) {
+          System.out.print(f + " ");
+        }
+      }
+			System.out.println("]");
+		}
+
+		return 0;
+	}
+
 
 	/**
 	 * Insert a record in the database. Any field/value pairs in the specified values HashMap will be written into the record with the specified

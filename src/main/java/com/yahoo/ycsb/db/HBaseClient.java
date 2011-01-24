@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.HTable;
 //import org.apache.hadoop.hbase.client.Scanner;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Scan;
@@ -318,6 +319,55 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 
     return Ok;
   }
+
+  /**
+   * Increment a record in the database. All fields in the specified array will be incremented by
+   * one.
+   *
+   * @param table  The name of the table
+   * @param key    The record key of the record to write.
+   * @param fields A list of the fields to increment for the record
+   * @return Zero on success, a non-zero error code on error.  See this class's description for a
+   *         discussion of error codes.
+   */
+  @Override
+  public int increment(String table, String key, List<String> fields) {
+    //if this is a "new" table, init HTable object.  Else, use existing one
+    if (!table.equals(table)) {
+      hTable = null;
+      try {
+        getHTable(table);
+        table = table;
+      } catch (IOException e) {
+        System.err.println("Error accessing HBase table: " + e);
+        return ServerError;
+      }
+    }
+
+
+    if (debug) {
+      System.out.println("Setting up increment for key: " + key);
+    }
+    Increment inc = new Increment(Bytes.toBytes(key));
+    for (String field : fields) {
+      inc.addColumn(columnFamilyBytes, Bytes.toBytes(field), 1L);
+    }
+
+    try {
+      hTable.increment(inc);
+    } catch (IOException e) {
+      if (debug) {
+        System.err.println("Error doing increment: " + e);
+      }
+      return ServerError;
+    } catch (ConcurrentModificationException e) {
+      //do nothing for now...hope this is rare
+      return ServerError;
+    }
+
+    return Ok;
+  }
+
 
   /**
    * Insert a record in the database. Any field/value pairs in the specified values HashMap will be
