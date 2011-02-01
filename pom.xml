@@ -13,6 +13,7 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
       <version>0.90.0-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
