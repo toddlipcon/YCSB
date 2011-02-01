@@ -1,7 +1,6 @@
 package com.yahoo.ycsb.workloads;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.Utils;
 import com.yahoo.ycsb.WorkloadException;
@@ -9,12 +8,7 @@ import com.yahoo.ycsb.measurements.Measurements;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class VerifyingWorkloadTest extends TestCase {
 
@@ -155,17 +149,15 @@ public class VerifyingWorkloadTest extends TestCase {
   }
 
   /**
-   * Builds a verifying workload generator with specfied properties.  As a side effect
-   * the measurement infrastructure is initialized as well.
-   *
-   * @param properties  Alternating key, value pairs for properties to set.
+   * Builds a verifying workload generator with specfied properties.  As a side effect the measurement infrastructure is
+   * initialized as well.
+   * @param properties Alternating key, value pairs for properties to set.
    * @return The workload we constructed.
-   * @throws WorkloadException
    */
   private VerifyingWorkload buildWorkload(String... properties) throws WorkloadException {
     Properties p = new Properties();
     p.setProperty("recordcount", "100");
-    for (int i = 0; i < properties.length; i+=2) {
+    for (int i = 0; i < properties.length; i += 2) {
       p.setProperty(properties[i], properties[i + 1]);
     }
     Measurements.setProperties(p);
@@ -173,9 +165,7 @@ public class VerifyingWorkloadTest extends TestCase {
     return new VerifyingWorkload(p);
   }
 
-  /**
-   * Provides DB that we can use to verify operations.
-   */
+  /** Provides DB that we can use to verify operations. */
   private static class MemoryDB extends DB {
     int scanCount = 0;
 
@@ -183,9 +173,7 @@ public class VerifyingWorkloadTest extends TestCase {
     private Map<String, TreeMap<String, Map<String, String>>> data = Maps.newTreeMap();
 
     /**
-     * Read a record from the database. Each field/value pair from the result will be stored in a
-     * HashMap.
-     *
+     * Read a record from the database. Each field/value pair from the result will be stored in a HashMap.
      * @param table  The name of the table
      * @param key    The record key of the record to read.
      * @param fields The list of fields to read, or null for all of them
@@ -193,7 +181,7 @@ public class VerifyingWorkloadTest extends TestCase {
      * @return Zero on success, a non-zero error code on error or "not found".
      */
     @Override
-    public int read(String table, String key, Set<String> fields, Map<String, String> result) {
+    public int read(String table, String key, Iterable<String> fields, Map<String, String> result) {
       result.clear();
       TreeMap<String, Map<String, String>> tableMap = data.get(table);
       if (tableMap == null) {
@@ -205,26 +193,24 @@ public class VerifyingWorkloadTest extends TestCase {
       }
       result.putAll(cell);
       if (fields != null) {
-        result.keySet().retainAll(fields);
+        result.keySet().retainAll(Sets.newHashSet(fields));
       }
       return ResultCodes.OK.ordinal();
     }
 
     /**
-     * Perform a range scan for a set of records in the database. Each field/value pair from the
-     * result will be stored in a HashMap.
-     *
+     * Perform a range scan for a set of records in the database. Each field/value pair from the result will be stored
+     * in a HashMap.
      * @param table       The name of the table
      * @param startkey    The record key of the first record to read.
      * @param recordCount The number of records to read
      * @param fields      The list of fields to read, or null for all of them
-     * @param result      A Vector of HashMaps, where each HashMap is a set field/value pairs for
-     *                    one record
-     * @return Zero on success, a non-zero error code on error.  See this class's description for a
-     *         discussion of error codes.
+     * @param result      A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
+     * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error
+     *         codes.
      */
     @Override
-    public int scan(String table, String startkey, int recordCount, Set<String> fields, List<Map<String, String>> result) {
+    public int scan(String table, String startkey, int recordCount, Iterable<String> fields, List<Map<String, String>> result) {
       TreeMap<String, Map<String, String>> tableMap = data.get(table);
       if (tableMap == null) {
         return ResultCodes.NO_SUCH_TABLE.ordinal();
@@ -238,7 +224,7 @@ public class VerifyingWorkloadTest extends TestCase {
 
         Map<String, String> tmp = Maps.newHashMap(tableMap.get(key));
         if (fields != null) {
-          tmp.keySet().retainAll(fields);
+          tmp.keySet().retainAll(Sets.newHashSet(fields));
         }
 
         result.add(tmp);
@@ -247,15 +233,13 @@ public class VerifyingWorkloadTest extends TestCase {
     }
 
     /**
-     * Update a record in the database. Any field/value pairs in the specified values HashMap will
-     * be written into the record with the specified record key, overwriting any existing values
-     * with the same field name.
-     *
+     * Update a record in the database. Any field/value pairs in the specified values HashMap will be written into the
+     * record with the specified record key, overwriting any existing values with the same field name.
      * @param table  The name of the table
      * @param key    The record key of the record to write.
      * @param values A HashMap of field/value pairs to update in the record
-     * @return Zero on success, a non-zero error code on error.  See this class's description for a
-     *         discussion of error codes.
+     * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error
+     *         codes.
      */
     @Override
     public int update(String table, String key, Map<String, String> values) {
@@ -274,15 +258,31 @@ public class VerifyingWorkloadTest extends TestCase {
       return ResultCodes.OK.ordinal();
     }
 
+    @Override
+    public int increment(String table, String key, List<String> fields) {
+      Map<String, String> results = Maps.newHashMap();
+      int code = read(table, key, fields, results);
+      if (code != 0) {
+        return code;
+      }
+      for (String k : results.keySet()) {
+        results.put(k, "" + (Integer.parseInt(results.get(k)) + 1));
+      }
+      code = update(table, key, results);
+      if (code != 0) {
+        return code;
+      }
+      return ResultCodes.OK.ordinal();
+    }
+
     /**
-     * Insert a record in the database. Any field/value pairs in the specified values HashMap will
-     * be written into the record with the specified record key.
-     *
+     * Insert a record in the database. Any field/value pairs in the specified values HashMap will be written into the
+     * record with the specified record key.
      * @param table  The name of the table
      * @param key    The record key of the record to insert.
      * @param values A HashMap of field/value pairs to insert in the record
-     * @return Zero on success, a non-zero error code on error.  See this class's description for a
-     *         discussion of error codes.
+     * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error
+     *         codes.
      */
     @Override
     public int insert(String table, String key, Map<String, String> values) {
@@ -296,11 +296,10 @@ public class VerifyingWorkloadTest extends TestCase {
 
     /**
      * Delete a record from the database.
-     *
      * @param table The name of the table
      * @param key   The record key of the record to delete.
-     * @return Zero on success, a non-zero error code on error.  See this class's description for a
-     *         discussion of error codes.
+     * @return Zero on success, a non-zero error code on error.  See this class's description for a discussion of error
+     *         codes.
      */
     @Override
     public int delete(String table, String key) {

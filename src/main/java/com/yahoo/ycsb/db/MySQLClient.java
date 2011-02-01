@@ -5,10 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NotImplemented;
@@ -131,14 +128,15 @@ public class MySQLClient extends DB {
 	/**
 	 * Read a record from the database. Each field/value pair from the result will be stored in a HashMap.
 	 *
-	 * @param table The name of the table
-	 * @param key The record key of the record to read.
-	 * @param fields The list of fields to read, or null for all of them
-	 * @param result A HashMap of field/value pairs for the result
-	 * @return Zero on success, a non-zero error code on error
+	 *
+   * @param table The name of the table
+   * @param key The record key of the record to read.
+   * @param fields The list of fields to read, or null for all of them
+   * @param result A HashMap of field/value pairs for the result
+   * @return Zero on success, a non-zero error code on error
 	 */
 	@Override
-	public int read(String table, String key, Set<String> fields, Map<String, String> result) {
+	public int read(String table, String key, Iterable<String> fields, Map<String, String> result) {
 
 		manageConnection();
 
@@ -189,7 +187,7 @@ public class MySQLClient extends DB {
 	 * @return Zero on success, a non-zero error code on error
 	 */
 	@Override
-	public int scan(String table, String startkey, int recordcount, Set<String> fields, List<Map<String, String>> result) {
+	public int scan(String table, String startkey, int recordcount, Iterable<String> fields, List<Map<String, String>> result) {
 		throw new IllegalArgumentException("MySQL driver does not currently support scans.", new NotImplemented());
 	}
 

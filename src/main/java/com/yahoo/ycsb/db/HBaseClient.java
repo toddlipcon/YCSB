@@ -123,13 +123,15 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
    * Read a record from the database. Each field/value pair from the result will be stored in a
    * HashMap.
    *
+   *
    * @param table  The name of the table
    * @param key    The record key of the record to read.
    * @param fields The list of fields to read, or null for all of them
    * @param result A HashMap of field/value pairs for the result
    * @return Zero on success, a non-zero error code on error
    */
-  public int read(String table, String key, Set<String> fields, Map<String, String> result) {
+  @Override
+  public int read(String table, String key, Iterable<String> fields, Map<String, String> result) {
     //if this is a "new" table, init HTable object.  Else, use existing one
     if (!this.table.equals(table)) {
       hTable = null;
@@ -183,91 +185,92 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
    *                    record
    * @return Zero on success, a non-zero error code on error
    */
-  public int scan(String table, String startkey, int recordcount, Set<String> fields, List<Map<String, String>> result) {
-    //if this is a "new" table, init HTable object.  Else, use existing one
-    if (!this.table.equals(table)) {
-      hTable = null;
-      try {
-        getHTable(table);
-        this.table = table;
-      } catch (IOException e) {
-        System.err.println("Error accessing HBase table: " + e);
-        return ServerError;
-      }
-    }
-
-    Scan s = new Scan(Bytes.toBytes(startkey));
-    //HBase has no record limit.  Here, assume recordcount is small enough to bring back in one call.
-    //We get back recordcount records
-    s.setCaching(recordcount);
-
-    //add specified fields or else all fields
-    if (fields == null) {
-      s.addFamily(columnFamilyBytes);
-    } else {
-      for (String field : fields) {
-        s.addColumn(columnFamilyBytes, Bytes.toBytes(field));
-      }
-    }
-
-    //get results
-    ResultScanner scanner = null;
+  @Override
+  public int scan(String table, String startkey, int recordcount, Iterable<String> fields, List<Map<String, String>> result) {
+  //if this is a "new" table, init HTable object.  Else, use existing one
+  if (!this.table.equals(table)) {
+    hTable = null;
     try {
-      scanner = hTable.getScanner(s);
-      int numResults = 0;
-      for (Result rr = scanner.next(); rr != null; rr = scanner.next()) {
-        //get row key
-        String key = Bytes.toString(rr.getRow());
-        if (debug) {
-          System.out.println("Got scan result for key: " + key);
-        }
-
-        Map<String, String> rowResult = new HashMap<String, String>();
-
-        //parse row
-        if (fields != null) {
-          //parse specified field list
-          for (String field : fields) {
-            byte[] value = rr.getValue(columnFamilyBytes, Bytes.toBytes(field));
-            rowResult.put(field, Bytes.toString(value));
-            if (debug) {
-              System.out.println("Result for field: " + field + " is: " + Bytes.toString(value));
-            }
-          }
-        } else {
-          //get all fields
-          //HBase can return a mapping for all columns in a column family
-          NavigableMap<byte[], byte[]> scanMap = rr.getFamilyMap(columnFamilyBytes);
-          for (byte[] fieldkey : scanMap.keySet()) {
-            String value = Bytes.toString(scanMap.get(fieldkey));
-            rowResult.put(Bytes.toString(fieldkey), value);
-            if (debug) {
-              System.out.println("Result for field: " + Bytes.toString(fieldkey) + " is: " + value);
-            }
-
-          }
-
-        }
-        //add rowResult to result vector
-        result.add(rowResult);
-        numResults++;
-        if (numResults >= recordcount) //if hit recordcount, bail out
-        {
-          break;
-        }
-      } //done with row
-
+      getHTable(table);
+      this.table = table;
     } catch (IOException e) {
-      if (debug) {
-        System.out.println("Error in getting/parsing scan result: " + e);
-      }
+      System.err.println("Error accessing HBase table: " + e);
       return ServerError;
-    } finally {
-      scanner.close();
     }
-
-    return Ok;
   }
+
+  Scan s = new Scan(Bytes.toBytes(startkey));
+  //HBase has no record limit.  Here, assume recordcount is small enough to bring back in one call.
+  //We get back recordcount records
+  s.setCaching(recordcount);
+
+  //add specified fields or else all fields
+  if (fields == null) {
+    s.addFamily(columnFamilyBytes);
+  } else {
+    for (String field : fields) {
+      s.addColumn(columnFamilyBytes, Bytes.toBytes(field));
+    }
+  }
+
+  //get results
+  ResultScanner scanner = null;
+  try {
+    scanner = hTable.getScanner(s);
+    int numResults = 0;
+    for (Result rr = scanner.next(); rr != null; rr = scanner.next()) {
+      //get row key
+      String key = Bytes.toString(rr.getRow());
+      if (debug) {
+        System.out.println("Got scan result for key: " + key);
+      }
+
+      Map<String, String> rowResult = new HashMap<String, String>();
+
+      //parse row
+      if (fields != null) {
+        //parse specified field list
+        for (String field : fields) {
+          byte[] value = rr.getValue(columnFamilyBytes, Bytes.toBytes(field));
+          rowResult.put(field, Bytes.toString(value));
+          if (debug) {
+            System.out.println("Result for field: " + field + " is: " + Bytes.toString(value));
+          }
+        }
+      } else {
+        //get all fields
+        //HBase can return a mapping for all columns in a column family
+        NavigableMap<byte[], byte[]> scanMap = rr.getFamilyMap(columnFamilyBytes);
+        for (byte[] fieldkey : scanMap.keySet()) {
+          String value = Bytes.toString(scanMap.get(fieldkey));
+          rowResult.put(Bytes.toString(fieldkey), value);
+          if (debug) {
+            System.out.println("Result for field: " + Bytes.toString(fieldkey) + " is: " + value);
+          }
+
+        }
+
+      }
+      //add rowResult to result vector
+      result.add(rowResult);
+      numResults++;
+      if (numResults >= recordcount) //if hit recordcount, bail out
+      {
+        break;
+      }
+    } //done with row
+
+  } catch (IOException e) {
+    if (debug) {
+      System.out.println("Error in getting/parsing scan result: " + e);
+    }
+    return ServerError;
+  } finally {
+    scanner.close();
+  }
+
+  return Ok;
+}
 
   /**
    * Update a record in the database. Any field/value pairs in the specified values HashMap will be
@@ -279,6 +282,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
    * @param values A HashMap of field/value pairs to update in the record
    * @return Zero on success, a non-zero error code on error
    */
+  @Override
   public int update(String table, String key, Map<String, String> values) {
     //if this is a "new" table, init HTable object.  Else, use existing one
     if (!this.table.equals(table)) {
@@ -378,6 +382,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
    * @param values A HashMap of field/value pairs to insert in the record
    * @return Zero on success, a non-zero error code on error
    */
+  @Override
   public int insert(String table, String key, Map<String, String> values) {
     return update(table, key, values);
   }
@@ -389,6 +394,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
    * @param key   The record key of the record to delete.
    * @return Zero on success, a non-zero error code on error
    */
+  @Override
   public int delete(String table, String key) {
     //if this is a "new" table, init HTable object.  Else, use existing one
     if (!this.table.equals(table)) {

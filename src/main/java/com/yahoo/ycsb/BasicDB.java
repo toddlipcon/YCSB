@@ -17,14 +17,7 @@
 
 package com.yahoo.ycsb;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.List;
-import java.util.Set;
-import java.util.Enumeration;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -94,13 +87,15 @@ public class BasicDB extends DB
 	/**
 	 * Read a record from the database. Each field/value pair from the result will be stored in a HashMap.
 	 *
-	 * @param table The name of the table
-	 * @param key The record key of the record to read.
-	 * @param fields The list of fields to read, or null for all of them
-	 * @param result A HashMap of field/value pairs for the result
-	 * @return Zero on success, a non-zero error code on error
+	 *
+   * @param table The name of the table
+   * @param key The record key of the record to read.
+   * @param fields The list of fields to read, or null for all of them
+   * @param result A HashMap of field/value pairs for the result
+   * @return Zero on success, a non-zero error code on error
 	 */
-	public int read(String table, String key, Set<String> fields, Map<String,String> result)
+  @Override
+	public int read(String table, String key, Iterable<String> fields, Map<String,String> result)
 	{
 		delay();
 
@@ -135,7 +130,8 @@ public class BasicDB extends DB
 	 * @param result A List of HashMaps, where each HashMap is a set field/value pairs for one record
 	 * @return Zero on success, a non-zero error code on error
 	 */
-	public int scan(String table, String startkey, int recordcount, Set<String> fields, List<Map<String,String>> result)
+  @Override
+	public int scan(String table, String startkey, int recordcount, Iterable<String> fields, List<Map<String,String>> result)
 	{
 		delay();
 
@@ -169,6 +165,7 @@ public class BasicDB extends DB
 	 * @param values A HashMap of field/value pairs to update in the record
 	 * @return Zero on success, a non-zero error code on error
 	 */
+  @Override
 	public int update(String table, String key, Map<String,String> values)
 	{
 		delay();
@@ -189,6 +186,7 @@ public class BasicDB extends DB
 		return 0;
 	}
 	
+  @Override
   public int increment(String table, String key, List<String> fields)
 	{
 		delay();
@@ -218,6 +216,7 @@ public class BasicDB extends DB
 	 * @param values A HashMap of field/value pairs to insert in the record
 	 * @return Zero on success, a non-zero error code on error
 	 */
+  @Override
 	public int insert(String table, String key, Map<String,String> values)
 	{
 		delay();
@@ -247,6 +246,7 @@ public class BasicDB extends DB
 	 * @param key The record key of the record to delete.
 	 * @return Zero on success, a non-zero error code on error
 	 */
+  @Override
 	public int delete(String table, String key)
 	{
 		delay();

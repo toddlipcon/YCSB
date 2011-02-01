@@ -64,6 +64,10 @@ public class VerifyingWorkload extends CoreWorkload {
     super.init(p);
   }
 
+  public VerifyingWorkload() {
+    super();
+  }
+
   /**
    * Do one insert operation. Because it will be called concurrently from multiple client threads,
    * this function must be thread safe. However, avoid synchronized, or the threads will block
@@ -117,106 +121,117 @@ public class VerifyingWorkload extends CoreWorkload {
   }
 
   public void doTransactionRead(DB db) {
-    readAndCheckRecord(db, chooseKey(), "read");
+    if (insertKey.get() > 0) {
+      readAndCheckRecord(db, chooseKey(), "read");
+    }
   }
 
   public void doTransactionReadModifyWrite(DB db) {
-    int keyNum = chooseKey();
+    if (insertKey.get() > 0) {
+      int keyNum = chooseKey();
 
-    String keyname = "user" + keyNum;
+      String keyname = "user" + keyNum;
 
-    Set<String> fields;
+      Set<String> fields;
 
-    readAndCheckRecord(db, keyNum, "READ-modify-write");
+      readAndCheckRecord(db, keyNum, "READ-modify-write");
 
-    if (!readallfields) {
-      //read a random field
-      String fieldname = String.format("field%05d", fieldchooser.nextInt());
+      if (!readallfields) {
+        //read a random field
+        String fieldname = String.format("field%05d", fieldchooser.nextInt());
 
 
-      fields = new HashSet<String>();
-      fields.add(fieldname);
-    } else {
-      fields = null;
-    }
+        fields = new HashSet<String>();
+        fields.add(fieldname);
+      } else {
+        fields = null;
+      }
 
-    Map<String, String> values = new HashMap<String, String>();
+      Map<String, String> values = new HashMap<String, String>();
 
-    if (writeallfields) {
-      //new data for all the fields
-      for (int i = 0; i < fieldcount; i++) {
-        String fieldName = String.format("field%05d", i);
-        String data = Utils.testableData(keyNum, i, fieldlength);
+      if (writeallfields) {
+        //new data for all the fields
+        for (int i = 0; i < fieldcount; i++) {
+          String fieldName = String.format("field%05d", i);
+          String data = Utils.testableData(keyNum, i, fieldlength);
+          values.put(fieldName, data);
+        }
+      } else {
+        //update a random field
+        int fieldNumber = fieldchooser.nextInt();
+        String fieldName = String.format("field%05d", fieldNumber);
+        String data = Utils.testableData(keyNum, fieldNumber, fieldlength);
         values.put(fieldName, data);
       }
-    } else {
-      //update a random field
-      int fieldNumber = fieldchooser.nextInt();
-      String fieldName = String.format("field%05d", fieldNumber);
-      String data = Utils.testableData(keyNum, fieldNumber, fieldlength);
-      values.put(fieldName, data);
+
+      //do the transaction
+
+      long st = System.currentTimeMillis();
+
+      reportErrorIfAny("read-modify-WRITE", db.update(table, keyname, values));
+
+      long en = System.currentTimeMillis();
+
+      Measurements.getMeasurements().measure("READ-MODIFY-WRITE", (int) (en - st));
     }
-
-    //do the transaction
-
-    long st = System.currentTimeMillis();
-
-    reportErrorIfAny("read-modify-WRITE", db.update(table, keyname, values));
-
-    long en = System.currentTimeMillis();
-
-    Measurements.getMeasurements().measure("READ-MODIFY-WRITE", (int) (en - st));
   }
 
   public void doTransactionScan(DB db) {
-    //choose a random key
-    int keyNum = chooseKey();
-    String startKeyName = "user" + keyNum;
+    final int totalRecordsInserted = insertKey.get();
+    if (totalRecordsInserted > 0) {
+      //choose a random key
+      int keyNum = chooseKey();
+      String startKeyName = "user" + keyNum;
 
-    //choose a random scan length
-    int len = fieldchooser.nextInt();
+      //choose a random scan length
+      int len = scanlength.nextInt();
+      if (len < 0) {
+        len = -len;
+      }
+      Set<String> fields = null;
 
-    Set<String> fields = null;
+      if (!readallfields) {
+        //read a random field
+        fields = new HashSet<String>();
+        fields.add(String.format("field%05d", fieldchooser.nextInt()));
+      }
 
-    if (!readallfields) {
-      //read a random field
-      fields = new HashSet<String>();
-      fields.add(String.format("field%05d", fieldchooser.nextInt()));
-    }
-
-    List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-    reportErrorIfAny("scan", db.scan(table, startKeyName, len, fields, result));
-    for (Map<String, String> row : result) {
-      for (String field : row.keySet()) {
-        if (!field.matches("field[0-9]+") || !row.get(field).matches("[0-9]+-.*")) {
-          throw new DataCorruptionException(String.format("Bad data found in field %s", field));
+      List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+      reportErrorIfAny("scan", db.scan(table, startKeyName, len, fields, result));
+      for (Map<String, String> row : result) {
+        for (String field : row.keySet()) {
+          if (!field.matches("field[0-9]+") || !row.get(field).matches("[0-9]+-.*")) {
+            throw new DataCorruptionException(String.format("Bad data found in field %s", field));
+          }
         }
       }
     }
   }
 
   public void doTransactionUpdate(DB db) {
-    //choose a random key
-    int keyNum = chooseKey();
-    String keyname = "user" + keyNum;
+    if (insertKey.get() > 0) {
+      //choose a random key
+      int keyNum = chooseKey();
+      String keyname = "user" + keyNum;
 
-    Map<String, String> values = new HashMap<String, String>();
+      Map<String, String> values = new HashMap<String, String>();
 
-    if (writeallfields) {
-      //new data for all the fields
-      for (int i = 0; i < fieldcount; i++) {
-        String fieldName = String.format("field%05d", i);
-        String data = Utils.ASCIIString(fieldlength);
-        values.put(fieldName, data);
+      if (writeallfields) {
+        //new data for all the fields
+        for (int i = 0; i < fieldcount; i++) {
+          String fieldName = String.format("field%05d", i);
+          String data = Utils.ASCIIString(fieldlength);
+          values.put(fieldName, data);
+        }
+      } else {
+        //update a random field
+        int fieldNum = fieldchooser.nextInt();
+
+        values.put(String.format("field%05d", fieldNum), Utils.testableData(keyNum, fieldNum, fieldlength));
       }
-    } else {
-      //update a random field
-      int fieldNum = fieldchooser.nextInt();
 
-      values.put(String.format("field%05d", fieldNum), Utils.testableData(keyNum, fieldNum, fieldlength));
+      reportErrorIfAny("update", db.update(table, keyname, values));
     }
-
-    reportErrorIfAny("update", db.update(table, keyname, values));
   }
 
   private int chooseKey() {

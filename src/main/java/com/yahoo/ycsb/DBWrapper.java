@@ -17,12 +17,7 @@
 
 package com.yahoo.ycsb;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 import com.yahoo.ycsb.measurements.Measurements;
 
@@ -77,13 +72,15 @@ public class DBWrapper extends DB
 	/**
 	 * Read a record from the database. Each field/value pair from the result will be stored in a HashMap.
 	 *
-	 * @param table The name of the table
-	 * @param key The record key of the record to read.
-	 * @param fields The list of fields to read, or null for all of them
-	 * @param result A HashMap of field/value pairs for the result
-	 * @return Zero on success, a non-zero error code on error
+	 *
+   * @param table The name of the table
+   * @param key The record key of the record to read.
+   * @param fields The list of fields to read, or null for all of them
+   * @param result A HashMap of field/value pairs for the result
+   * @return Zero on success, a non-zero error code on error
 	 */
-	public int read(String table, String key, Set<String> fields, Map<String,String> result)
+  @Override
+	public int read(String table, String key, Iterable<String> fields, Map<String,String> result)
 	{
 		long st=System.currentTimeMillis();
 		int res=_db.read(table,key,fields,result);
@@ -103,7 +100,8 @@ public class DBWrapper extends DB
 	 * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
 	 * @return Zero on success, a non-zero error code on error
 	 */
-	public int scan(String table, String startkey, int recordcount, Set<String> fields, List<Map<String,String>> result)
+  @Override
+	public int scan(String table, String startkey, int recordcount, Iterable<String> fields, List<Map<String,String>> result)
 	{
 		long st=System.currentTimeMillis();
 		int res=_db.scan(table,startkey,recordcount,fields,result);
@@ -135,7 +133,7 @@ public class DBWrapper extends DB
 	public int increment(String table, String key, List<String> fields)
 	{
 		long st=System.currentTimeMillis();
-		int res=_db.increment(table,key,fields);
+		int res=_db.increment(table, key, fields);
 		long en=System.currentTimeMillis();
 		_measurements.measure("INCREMENT",(int)(en-st));
 		_measurements.reportReturnCode("INCREMENT",res);
