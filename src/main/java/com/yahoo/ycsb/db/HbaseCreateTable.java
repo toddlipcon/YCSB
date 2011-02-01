@@ -1,8 +1,29 @@
 package com.yahoo.ycsb.db;
 
-/**
- * Created by IntelliJ IDEA. User: tdunning Date: 2/1/11 Time: 1:49 PM To change this template use File | Settings |
- * File Templates.
- */
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+
+import java.io.IOException;
+
 public class HbaseCreateTable {
+  public static void main(String[] args) throws IOException, MasterNotRunningException {
+    int regions = 50;
+    if (args.length > 0) {
+      regions = Integer.parseInt(args[0]);
+    }
+    final Configuration configuration = new Configuration();
+    configuration.addResource("hbase-site.xml");
+    configuration.set("clientPort", "5181");
+    System.out.printf("%s\n", configuration.toString());
+    HBaseAdmin admin = new HBaseAdmin(configuration);
+    final HTableDescriptor descriptor = new HTableDescriptor("usertable");
+    descriptor.addFamily(new HColumnDescriptor("family"));
+
+    String startKey = "user1020000000";
+    String endKey = "user940000000";
+    admin.createTable(descriptor, startKey.getBytes(), endKey.getBytes(), regions);
+  }
 }
