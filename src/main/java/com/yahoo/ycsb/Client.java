@@ -586,12 +586,9 @@ public class Client
 		//overwrite file properties with properties from the command line
 
 		//Issue #5 - remove call to stringPropertyNames to make compilable under Java 1.5
-		for (Enumeration e=props.propertyNames(); e.hasMoreElements(); )
-		{
-		   String prop=(String)e.nextElement();
-		   
-		   fileprops.setProperty(prop,props.getProperty(prop));
-		}
+    for (String key : props.stringPropertyNames()) {
+      fileprops.setProperty(key, props.getProperty(key));
+    }
 
 		props=fileprops;
 
