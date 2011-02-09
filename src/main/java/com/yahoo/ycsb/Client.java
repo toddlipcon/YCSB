@@ -92,39 +92,19 @@ class StatusThread extends Thread
 			lasttotalops=totalops;
 			lasten=en;
 			
-			DecimalFormat d = new DecimalFormat("#.##");
-			
-			if (totalops==0)
-			{
-				System.err.println(_label+" "+(interval/1000)+" sec: "+totalops+" operations; "+Measurements.getMeasurements().getSummary());
-			}
-			else
-			{
-				System.err.println(_label+" "+(interval/1000)+" sec: "+totalops+" operations; "+d.format(curthroughput)+" current ops/sec; "+Measurements.getMeasurements().getSummary());
-			}
+      if (_standardstatus) {
+        System.out.printf("1$%s %2$tF %2$tT %3$d sec: %4$d operations; current ops/sec; %5$.1f %6$s\n", _label, System.currentTimeMillis(), (interval / 1000), totalops, curthroughput, Measurements.getMeasurements().getSummary());
+      } else {
+        System.out.printf("1$%s %2$tF %2$tT %3$d sec: %4$d operations; current ops/sec; %5$.1f %6$s\n", _label, System.currentTimeMillis(), (interval / 1000), totalops, curthroughput, Measurements.getMeasurements().getSummary());
+      }
 
-			if (_standardstatus)
-			{
-			if (totalops==0)
-			{
-				System.out.println(_label+" "+(interval/1000)+" sec: "+totalops+" operations; "+Measurements.getMeasurements().getSummary());
-			}
-			else
-			{
-				System.out.println(_label+" "+(interval/1000)+" sec: "+totalops+" operations; "+d.format(curthroughput)+" current ops/sec; "+Measurements.getMeasurements().getSummary());
-			}
-			}
+      try {
+        sleep(sleeptime);
+      } catch (InterruptedException e) {
+        //do nothing
+      }
 
-			try
-			{
-				sleep(sleeptime);
-			}
-			catch (InterruptedException e)
-			{
-				//do nothing
-			}
-
-		}
+    }
 		while (!alldone);
 	}
 }
