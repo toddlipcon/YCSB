@@ -59,6 +59,8 @@ public class HBaseClient extends com.yahoo.ycsb.DB
     public String _columnFamily="";
     public byte _columnFamilyBytes[];
 
+    private boolean writeToWAL = true;
+
     public static final int Ok=0;
     public static final int ServerError=-1;
     public static final int HttpError=-2;
@@ -77,6 +79,10 @@ public class HBaseClient extends com.yahoo.ycsb.DB
 		{
 		    _debug=true;
 	    }
+
+      if ("false".equals(getProperties().getProperty("wal"))) {
+        writeToWAL = false;
+      }
 
 	    _columnFamily = getProperties().getProperty("columnfamily");
 	    if (_columnFamily == null) 
@@ -109,7 +115,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB
             _hTable = new HTable(config, table);
             //2 suggestions from http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
             _hTable.setAutoFlush(false);
-            _hTable.setWriteBufferSize(1024*1024*12);
+            _hTable.setWriteBufferSize(1024*1024*1);
             //return hTable;
         }
 
@@ -305,6 +311,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB
             System.out.println("Setting up put for key: "+key);
         }
         Put p = new Put(Bytes.toBytes(key));
+        p.setWriteToWAL(writeToWAL);
         for (Map.Entry<String, String> entry : values.entrySet())
         {
             if (_debug) {
@@ -356,6 +363,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB
             System.out.println("Setting up increment for key: "+key);
         }
         Increment inc = new Increment(Bytes.toBytes(key));
+        inc.setWriteToWAL(writeToWAL);
         for (String field : fields) {
           inc.addColumn(_columnFamilyBytes, Bytes.toBytes(field), 1L);
         }
