@@ -1,6 +1,7 @@
 Yahoo! Cloud System Benchmark (YCSB)
+(translated to maven and idiomatic Java by Ted Dunning)
 
-http://wiki.github.com/brianfrankcooper/YCSB/
+https://github.com/tdunning/YCSB
 http://research.yahoo.com/Web_Information_Management/YCSB
 ycsb-users@yahoogroups.com
 
@@ -43,6 +44,13 @@ doc/index.html file.
 
 Revision History
 ================
+
+0.2 - Feb 2011
+
+- started translation to idiomatic Java
+- added VerifyingWorkload
+- added HbaseCreateTable to create pre-split table
+- switched to maven and massively simplified build
 
 0.1.3 - 10/26/10
 
