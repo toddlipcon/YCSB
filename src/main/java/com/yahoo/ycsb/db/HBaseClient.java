@@ -101,7 +101,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
   public void getHTable(String table) throws IOException {
     synchronized (this) {
       Configuration config = HBaseConfiguration.create();
-      HBaseAdmin.checkHBaseAvailable(config);
+      //HBaseAdmin.checkHBaseAvailable(config);
 
       HBaseAdmin hbAdmin = new HBaseAdmin(config);
       if (!hbAdmin.tableExists(table)) {
@@ -113,11 +113,13 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
         hbAdmin.createTable(desc);
       }
 
-      hTable = new HTable(config, table);
-      //2 suggestions from http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
-      hTable.setAutoFlush(false);
-      hTable.setWriteBufferSize(1024 * 1024 * 12);
-      //return hTable;
+      if (hTable == null) {
+        hTable = new HTable(config, table);
+        //2 suggestions from http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
+        hTable.setAutoFlush(false);
+        hTable.setWriteBufferSize(1024 * 1024 * 12);
+        //return hTable;
+      }
     }
 
   }
