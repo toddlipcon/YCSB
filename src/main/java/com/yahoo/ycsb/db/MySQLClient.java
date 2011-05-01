@@ -92,7 +92,7 @@ public class MySQLClient extends DB {
 	/**
 	 * Initialize any state for this DB.
 	 * Called once per DB instance; there is one DB instance per client thread.
-	 */
+     */
 	@Override
 	public void init() throws DBException {
 		try {

@@ -36,35 +36,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * relative proportion of different kinds of operations, and other properties of the workload, are
  * controlled by parameters specified at runtime.
  * <p/>
- * Properties to control the client:
- *
- * <ul>
- * <li><b>fieldcount</b>: the number of fields in a record (default: 10)
- * <li><b>fieldlength</b>: the size of each field (default: 100)
- * <li><b>readallfields</b>: should reads read all fields (true) or just one (false) (default: true)
- * <li><b>writeallfields</b>: should updates and read/modify/writes update all fields (true) or just
- * one (false) (default: false)
- * <li><b>readproportion</b>: what proportion of operations should be
- * reads (default: 0.95)
- * <li><b>updateproportion</b>: what proportion of operations should be
- * updates (default: 0.05)
- * <li><b>insertproportion</b>: what proportion of operations should be
- * inserts (default: 0)
- * <li><b>scanproportion</b>: what proportion of operations should be scans
- * (default: 0)
- * <li><b>readmodifywriteproportion</b>: what proportion of operations should be read a
- * record, modify it, write it back (default: 0)
- * <li><b>requestdistribution</b>: what distribution
+ * Properties to control the client: <UL> <LI><b>fieldcount</b>: the number of fields in a record
+ * (default: 10) <LI><b>fieldlength</b>: the size of each field (default: 100)
+ * <LI><b>readallfields</b>: should reads read all fields (true) or just one (false) (default: true)
+ * <LI><b>writeallfields</b>: should updates and read/modify/writes update all fields (true) or just
+ * one (false) (default: false) <LI><b>readproportion</b>: what proportion of operations should be
+ * reads (default: 0.95) <LI><b>updateproportion</b>: what proportion of operations should be
+ * updates (default: 0.05) <LI><b>insertproportion</b>: what proportion of operations should be
+ * inserts (default: 0) <LI><b>scanproportion</b>: what proportion of operations should be scans
+ * (default: 0) <LI><b>readmodifywriteproportion</b>: what proportion of operations should be read a
+ * record, modify it, write it back (default: 0) <LI><b>requestdistribution</b>: what distribution
  * should be used to select the records to operate on - uniform, zipfian or latest (default:
- * uniform)
- * <li><b>maxscanlength</b>: for scans, what is the maximum number of records to scan
- * (default: 1000)
- * <li><b>scanlengthdistribution</b>: for scans, what distribution should be used to
+ * uniform) <LI><b>maxscanlength</b>: for scans, what is the maximum number of records to scan
+ * (default: 1000) <LI><b>scanlengthdistribution</b>: for scans, what distribution should be used to
  * choose the number of records to scan, for each scan, between 1 and maxscanlength (default:
- * uniform)
- * <li><b>insertorder</b>: should records be inserted in order by key ("ordered"), or in
- * hashed order ("hashed") (default: hashed)
- * </ul>
+ * uniform) <LI><b>insertorder</b>: should records be inserted in order by key ("ordered"), or in
+ * hashed order ("hashed") (default: hashed) </ul>
  */
 public class VerifyingWorkload extends CoreWorkload {
   private volatile int errorCount = 0;
