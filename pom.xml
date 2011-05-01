@@ -6,7 +6,7 @@
 
   <groupId>ycsb2</groupId>
   <artifactId>ycsb2</artifactId>
-  <version>1.0</version>
+  <version>0.2</version>
 
   <dependencies>
     <dependency>
