@@ -18,31 +18,39 @@
 package com.yahoo.ycsb.db;
 
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.yahoo.ycsb.DBException;
-
-import java.io.IOException;
-import java.util.*;
-//import java.util.HashMap;
-//import java.util.Properties;
-//import java.util.Set;
-//import java.util.Vector;
-
-import org.apache.hadoop.hbase.client.HTable;
-//import org.apache.hadoop.hbase.client.Scanner;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-//import org.apache.hadoop.hbase.io.Cell;
-//import org.apache.hadoop.hbase.io.RowResult;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * HBase client for YCSB framework
@@ -57,10 +65,6 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 
   public static final int Ok = 0;
   public static final int ServerError = -1;
-  public static final int HttpError = -2;
-  public static final int NoMatchingRecord = -3;
-
-  public static Object tableLock = new Object();
 
   /**
    * Initialize any state for this DB. Called once per DB instance; there is one DB instance per
@@ -78,7 +82,6 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
       throw new DBException("No columnfamily specified");
     }
     columnFamilyBytes = Bytes.toBytes(columnFamily);
-
   }
 
   /**
@@ -96,9 +99,9 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
   }
 
   public void getHTable(String table) throws IOException {
-    synchronized (tableLock) {
-      HBaseConfiguration config = new HBaseConfiguration();
-      HBaseAdmin.checkHBaseAvailable(config);
+    synchronized (this) {
+      Configuration config = HBaseConfiguration.create();
+      //HBaseAdmin.checkHBaseAvailable(config);
 
       HBaseAdmin hbAdmin = new HBaseAdmin(config);
       if (!hbAdmin.tableExists(table)) {
@@ -110,11 +113,13 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
         hbAdmin.createTable(desc);
       }
 
-      hTable = new HTable(config, table);
-      //2 suggestions from http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
-      hTable.setAutoFlush(false);
-      hTable.setWriteBufferSize(1024 * 1024 * 12);
-      //return hTable;
+      if (hTable == null) {
+        hTable = new HTable(config, table);
+        //2 suggestions from http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
+        hTable.setAutoFlush(false);
+        hTable.setWriteBufferSize(1024 * 1024 * 12);
+        //return hTable;
+      }
     }
 
   }
@@ -144,7 +149,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
       }
     }
 
-    Result r = null;
+    Result r;
     try {
       if (debug) {
         System.out.println("Doing read from HBase columnfamily " + columnFamily);
@@ -341,7 +346,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
       hTable = null;
       try {
         getHTable(table);
-        table = table;
+        this.table = table;
       } catch (IOException e) {
         System.err.println("Error accessing HBase table: " + e);
         return ServerError;
@@ -425,7 +430,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
     return Ok;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException, ExecutionException {
     if (args.length != 3) {
       System.out.println("Please specify a threadcount, columnfamily and operation count");
       System.exit(0);
@@ -440,96 +445,78 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 
     final int opcount = Integer.parseInt(args[2]) / threadcount;
 
-    Vector<Thread> allthreads = new Vector<Thread>();
-
+    List<Callable<Integer>> tasks = Lists.newArrayList();
     for (int i = 0; i < threadcount; i++) {
-      Thread t = new Thread() {
-        public void run() {
-          try {
-            Random random = new Random();
-
-            HBaseClient cli = new HBaseClient();
-
-            Properties props = new Properties();
-            props.setProperty("columnfamily", columnfamily);
-            props.setProperty("debug", "true");
-            cli.setProperties(props);
-
-            cli.init();
-
-            //HashMap<String,String> result=new HashMap<String,String>();
-
-            long accum = 0;
-
-            for (int i = 0; i < opcount; i++) {
-              int keynum = random.nextInt(keyspace);
-              String key = "user" + keynum;
-              long st = System.currentTimeMillis();
-              int rescode;
-              /*
-              HashMap hm = new HashMap();
-              hm.put("field1","value1");
-              hm.put("field2","value2");
-              hm.put("field3","value3");
-              rescode=cli.insert("table1",key,hm);
-              HashSet<String> s = new HashSet();
-              s.add("field1");
-              s.add("field2");
-
-              rescode=cli.read("table1", key, s, result);
-              //rescode=cli.delete("table1",key);
-              rescode=cli.read("table1", key, s, result);
-              */
-              HashSet<String> scanFields = new HashSet<String>();
-              scanFields.add("field1");
-              scanFields.add("field3");
-              List<Map<String, String>> scanResults = new ArrayList<Map<String, String>>();
-              rescode = cli.scan("table1", "user2", 20, null, scanResults);
-
-              long en = System.currentTimeMillis();
-
-              accum += (en - st);
-
-              if (rescode != Ok) {
-                System.out.println("Error " + rescode + " for " + key);
-              }
-
-              if (i % 1 == 0) {
-                System.out.println(i + " operations, average latency: " + (((double) accum) / ((double) i)));
-              }
-            }
-
-            //System.out.println("Average latency: "+(((double)accum)/((double)opcount)));
-            //System.out.println("Average get latency: "+(((double)cli.TotalGetTime)/((double)cli.TotalGetOps)));
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      };
-      allthreads.add(t);
+      tasks.add(new LoadGenerator(opcount, keyspace, columnfamily));
     }
+    ExecutorService es = Executors.newCachedThreadPool();
 
     long st = System.currentTimeMillis();
-    for (Thread t : allthreads) {
-      t.start();
-    }
-
-    for (Thread t : allthreads) {
-      try {
-        t.join();
-      } catch (InterruptedException e) {
-      }
-    }
+    List<Future<Integer>> r = es.invokeAll(tasks);
     long en = System.currentTimeMillis();
 
-    System.out.println("Throughput: " + ((1000.0) * (((double) (opcount * threadcount)) / ((double) (en - st)))) + " ops/sec");
+    int n = 0;
+    for (Future<Integer> result : r) {
+      n += result.get();
+    }
 
+    System.out.printf("Throughput: %.1f ops/sec for %d operations", ((1000.0) * (((double) (opcount * threadcount)) / ((double) (en - st)))), n);
+  }
+
+  private static class LoadGenerator implements Callable<Integer> {
+    private int opCount;
+    private int keySpace;
+    private String columnFamily;
+
+    public LoadGenerator(int opCount, int keySpace, String columnFamily) {
+      this.opCount = opCount;
+      this.keySpace = keySpace;
+      this.columnFamily = columnFamily;
+    }
+
+    @Override
+    public Integer call() throws DBException {
+      Random random = new Random();
+
+      HBaseClient cli = new HBaseClient();
+
+      Properties props = new Properties();
+      props.setProperty("columnfamily", columnFamily);
+      props.setProperty("debug", "true");
+      cli.setProperties(props);
+
+      cli.init();
+
+      long accum = 0;
+
+      for (int i = 0; i < opCount; i++) {
+        int keynum = random.nextInt(keySpace);
+        String key = "user" + keynum;
+        long st = System.currentTimeMillis();
+        int rescode;
+
+        Set<String> scanFields = Sets.newHashSet();
+        scanFields.add("field1");
+        scanFields.add("field3");
+        List<Map<String, String>> scanResults = new ArrayList<Map<String, String>>();
+        rescode = cli.scan("table1", "user2", 20, null, scanResults);
+
+        long en = System.currentTimeMillis();
+
+        accum += (en - st);
+
+        if (rescode != Ok) {
+          System.out.println("Error " + rescode + " for " + key);
+        }
+
+        System.out.println(i + " operations, average latency: " + (((double) accum) / ((double) i)));
+      }
+
+      //System.out.println("Average latency: "+(((double)accum)/((double)opcount)));
+      //System.out.println("Average get latency: "+(((double)cli.TotalGetTime)/((double)cli.TotalGetOps)));
+      return opCount;
+    }
   }
 }
 
-/* For customized vim control
- * set autoindent
- * set si
- * set shiftwidth=4
-*/
 
