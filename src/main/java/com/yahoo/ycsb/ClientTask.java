@@ -4,9 +4,9 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 /**
-* Created by IntelliJ IDEA. User: tdunning Date: 2/14/11 Time: 3:15 PM To change this template use File | Settings |
-* File Templates.
-*/
+ * Describes the overall structure of a workload task.  This is where we delegate operations to the
+ * actual workload object.
+ */
 class ClientTask implements Callable<Integer> {
   private volatile int opsDone = 0;
 
