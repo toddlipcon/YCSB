@@ -88,158 +88,9 @@ class StatusThread extends Thread {
       } catch (InterruptedException e) {
         //do nothing
       }
-
     }
   }
 }
-
-/**
- * A thread for executing transactions or data inserts to the database.
- * @author cooperb
- */
-class ClientThread extends Thread {
-  static Random random = new Random();
-
-  DB db;
-  boolean doTransactions;
-  Workload workload;
-  int opCount;
-  double target;
-
-  volatile int opsDone;
-  int threadId;
-  int threadCount;
-  Object workloadState;
-  Properties properties;
-
-
-  /**
-   * Constructor.
-   * @param db                  the DB implementation to use
-   * @param doTransactions      true to do transactions, false to insert data
-   * @param workload            the workload to use
-   * @param threadId            the id of this thread
-   * @param threadCount         the total number of threads
-   * @param properties          the properties defining the experiment
-   * @param opCount             the number of operations (transactions or inserts) to do
-   * @param perThreadTargetRate target number of operations per thread per ms
-   */
-  public ClientThread(DB db, boolean doTransactions, Workload workload, int threadId, int threadCount, Properties properties, int opCount, double perThreadTargetRate) {
-    this.db = db;
-    this.doTransactions = doTransactions;
-    this.workload = workload;
-    this.opCount = opCount;
-    opsDone = 0;
-    target = perThreadTargetRate;
-    this.threadId = threadId;
-    this.threadCount = threadCount;
-    this.properties = properties;
-    //System.out.println("Interval = "+interval);
-  }
-
-  public int getOpsDone() {
-    return opsDone;
-  }
-
-  public void run() {
-    try {
-      db.init();
-    } catch (DBException e) {
-      e.printStackTrace();
-      e.printStackTrace(System.out);
-      return;
-    }
-
-    try {
-      workloadState = workload.initThread(properties, threadId, threadCount);
-    } catch (WorkloadException e) {
-      e.printStackTrace();
-      e.printStackTrace(System.out);
-      return;
-    }
-
-    //spread the thread operations out so they don't all hit the DB at the same time
-    try {
-      //GH issue 4 - throws exception if _target>1 because random.nextInt argument must be >0
-      //and the sleep() doesn't make sense for granularities < 1 ms anyway
-      if ((target > 0) && (target <= 1.0)) {
-        sleep(random.nextInt((int) (1.0 / target)));
-      }
-    } catch (InterruptedException e) {
-      //do nothing
-    }
-
-    try {
-      if (doTransactions) {
-        long st = System.currentTimeMillis();
-
-        while ((opCount == 0) || (opsDone < opCount)) {
-
-          if (!workload.doTransaction(db, workloadState)) {
-            break;
-          }
-
-          opsDone++;
-
-          //throttle the operations
-          if (target > 0) {
-            //this is more accurate than other throttling approaches we have tried,
-            //like sleeping for (1/target throughput)-operation latency,
-            //because it smooths timing inaccuracies (from sleep() taking an int,
-            //current time in millis) over many operations
-            while (System.currentTimeMillis() - st < ((double) opsDone) / target) {
-              try {
-                sleep(1);
-              } catch (InterruptedException e) {
-                //do nothing
-              }
-
-            }
-          }
-        }
-      } else {
-        long st = System.currentTimeMillis();
-
-        while ((opCount == 0) || (opsDone < opCount)) {
-
-          if (!workload.doInsert(db, workloadState)) {
-            break;
-          }
-
-          opsDone++;
-
-          //throttle the operations
-          if (target > 0) {
-            //this is more accurate than other throttling approaches we have tried,
-            //like sleeping for (1/target throughput)-operation latency,
-            //because it smooths timing inaccuracies (from sleep() taking an int,
-            //current time in millis) over many operations
-            while (System.currentTimeMillis() - st < ((double) opsDone) / target) {
-              try {
-                sleep(1);
-              } catch (InterruptedException e) {
-                //do nothing
-              }
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      e.printStackTrace(System.out);
-      System.exit(0);
-    }
-
-    try {
-      db.cleanup();
-    } catch (DBException e) {
-      e.printStackTrace();
-      e.printStackTrace(System.out);
-      return;
-    }
-  }
-}
-
 
 /** Main class for executing YCSB. */
 public class Client {
@@ -533,17 +384,11 @@ public class Client {
       }
     }
 
-    List<Thread> threads = Lists.newArrayList();
     List<RateLimiter<ClientTask>> toDo = Lists.newArrayList();
     for (int threadId = 0; threadId < threadCount; threadId++) {
       DB db = DBFactory.newDB(dbname, props);
-      Thread t = new ClientThread(db, dotransactions, workload, threadId, threadCount, props, opcount / threadCount, targetPerThreadPerMs);
-
       ClientTask task = new ClientTask(db, workload, threadId, threadCount, props);
       toDo.add(new RateLimiter<ClientTask>(((double)opcount)/ threadCount, targetPerThreadPerMs, task));
-
-      threads.add(t);
-      //t.start();
     }
 
 
