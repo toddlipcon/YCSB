@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
  * conform to the new settings.
  */
 public class LoadGenerator {
-  private Logger log = Logger.getLogger(LoadGenerator.class);
+  private final Logger log = Logger.getLogger(LoadGenerator.class);
+  private final String zookeeperServers;
 
   private String propFile;
   private ZooKeeper zk;
@@ -30,9 +31,10 @@ public class LoadGenerator {
 
   public LoadGenerator(String propFile, String zk) throws IOException, InterruptedException, KeeperException {
     this.propFile = propFile;
+    this.zookeeperServers = zk;
     if (zk != null) {
       // set up monitoring
-      init(new ZooKeeper(zk, 20, null));
+      init(new ZooKeeper(zookeeperServers, 20, null));
     } else {
       // load once only
       reload(new FileInputStream(propFile));
@@ -41,6 +43,7 @@ public class LoadGenerator {
 
   public LoadGenerator(String propFile, ZooKeeper zk) {
     this.propFile = propFile;
+    zookeeperServers = null;
     init(zk);
   }
 
@@ -60,18 +63,21 @@ public class LoadGenerator {
             // stop load
 
           default:
-            // event type None probably means we lost our ZK connection
+            // event type None probably means we temporarily lost our ZK connection
             // nothing to do for that but keep on keeping on
           case None:
+
             // it makes no sense to put children under a workload file
           case NodeChildrenChanged:
-            // ignore
+            log.warn("Unexpected addition of children under property file (may have lost watch)");
+            reloadFromZookeeper();
             break;
         }
       }
     });
 
-    // check on the workload version in ZK every few seconds to make sure that we never lose the watch
+    // check on the workload version in ZK every few seconds to make sure that we never lose
+    // track even if we had a session expiration or something.
     ScheduledExecutorService checker = Executors.newScheduledThreadPool(1);
     checker.scheduleAtFixedRate(new Runnable() {
       @Override
@@ -88,18 +94,34 @@ public class LoadGenerator {
    */
   private synchronized void reloadFromZookeeper() {
     try {
-      Stat stat = new Stat();
-      byte[] data = this.zk.getData(propFile, true, stat);
-      if (stat.getVersion() != propFileVersion) {
-        this.reload(new ByteArrayInputStream(data));
-        propFileVersion = stat.getVersion();
+      if (zk == null) {
+        init(new ZooKeeper(zookeeperServers, 20, null));
       }
-    } catch (KeeperException e) {
-      log.error("Error getting workload file from ZK", e);
-      // don't bother trying to read again ... the file will be checked shortly
-    } catch (InterruptedException e) {
-      log.error("Interruptiong while getting workload file from ZK", e);
-      // ignore this.  The file will be checked again shortly
+    } catch (IOException e) {
+      log.error("Can't re-open zookeeper connection");
+      // stop serving
+      return;
+    }
+
+    if (zk != null) {
+      try {
+        Stat stat = new Stat();
+        byte[] data = this.zk.getData(propFile, true, stat);
+        if (stat.getVersion() != propFileVersion) {
+          this.reload(new ByteArrayInputStream(data));
+          propFileVersion = stat.getVersion();
+        }
+      } catch (KeeperException.SessionExpiredException e) {
+        // reset zk connection so it will get re-opened later
+        zk = null;
+      } catch (KeeperException e) {
+        log.error("Error getting workload file from ZK", e);
+        // don't bother trying to read again right now... the file will be checked again shortly
+      } catch (InterruptedException e) {
+        log.error("Interruption while getting workload file from ZK", e);
+        // ignore this.  This can't happen as far as we expect and the file
+        // will be checked again shortly
+      }
     }
   }
 
