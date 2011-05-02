@@ -18,14 +18,22 @@
 package com.yahoo.ycsb;
 
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-
 import com.google.common.collect.Lists;
 import com.yahoo.ycsb.measurements.Measurements;
 import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
 import com.yahoo.ycsb.measurements.exporter.TextMeasurementsExporter;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 //import org.apache.log4j.BasicConfigurator;
 
@@ -204,6 +212,9 @@ public class Client {
       System.exit(0);
     }
 
+    String zk = null;
+    String propfile = "/ycsb/workload";
+
     while (args[argindex].startsWith("-")) {
       if (args[argindex].compareTo("-threads") == 0) {
         argindex++;
@@ -254,23 +265,10 @@ public class Client {
           usageMessage();
           System.exit(0);
         }
-        String propfile = args[argindex];
+        propfile = args[argindex];
         argindex++;
 
-        Properties myfileprops = new Properties();
-        try {
-          myfileprops.load(new FileInputStream(propfile));
-        } catch (IOException e) {
-          System.out.println(e.getMessage());
-          System.exit(0);
-        }
 
-        //Issue #5 - remove call to stringPropertyNames to make compilable under Java 1.5
-        for (Enumeration e = myfileprops.propertyNames(); e.hasMoreElements();) {
-          String prop = (String) e.nextElement();
-
-          fileprops.setProperty(prop, myfileprops.getProperty(prop));
-        }
 
       } else if (args[argindex].compareTo("-p") == 0) {
         argindex++;
@@ -289,6 +287,15 @@ public class Client {
         props.put(name, value);
         //System.out.println("["+name+"]=["+value+"]");
         argindex++;
+      } else if (args[argindex].compareTo("-Z") == 0) {
+        argindex++;
+        if (argindex >= args.length) {
+          usageMessage();
+          System.exit(0);
+        }
+
+        zk = args[argindex];
+        argindex++;
       } else {
         System.out.println("Unknown option " + args[argindex]);
         usageMessage();
@@ -305,25 +312,52 @@ public class Client {
       System.exit(0);
     }
 
-    //set up logging
-    //BasicConfigurator.configure();
-
     //overwrite file properties with properties from the command line
 
+    Properties myfileprops = new Properties();
+    try {
+      myfileprops.load(new FileInputStream(propfile));
+    } catch (IOException e) {
+      System.out.println(e.getMessage());
+      System.exit(0);
+    }
+
     //Issue #5 - remove call to stringPropertyNames to make compilable under Java 1.5
+    for (Enumeration e = myfileprops.propertyNames(); e.hasMoreElements();) {
+      String prop = (String) e.nextElement();
+
+      fileprops.setProperty(prop, myfileprops.getProperty(prop));
+    }
     for (String key : props.stringPropertyNames()) {
       fileprops.setProperty(key, props.getProperty(key));
     }
 
     props = fileprops;
 
+    System.out.println("YCSB Client 0.1");
+    System.out.print("Command line:");
+    for (int i = 0; i < args.length; i++) {
+      System.out.print(" " + args[i]);
+    }
+    System.out.println();
+
+    //lg = new LoadGenerator(propfile, zk);
+    runTest(props, dotransactions, status, label);
+  }
+
+  private static void runTest(Properties props, boolean doTransactions, boolean showStatus, String label)
+          throws ClassNotFoundException, InstantiationException, IllegalAccessException, WorkloadException,
+                 UnknownDBException, DBException, InterruptedException, ExecutionException {
+    int threadCount;
+    String dbName;
+    int target;
     if (!checkRequiredProperties(props)) {
       System.exit(0);
     }
 
     //get number of threads, target and db
     threadCount = Integer.parseInt(props.getProperty("threadCount", "1"));
-    dbname = props.getProperty("db", "com.yahoo.ycsb.BasicDB");
+    dbName = props.getProperty("db", "com.yahoo.ycsb.BasicDB");
     target = Integer.parseInt(props.getProperty("target", "0"));
 
     //compute the target throughput
@@ -333,18 +367,12 @@ public class Client {
       targetPerThreadPerMs = targetPerThread / 1000.0;
     }
 
-    System.out.println("YCSB Client 0.1");
-    System.out.print("Command line:");
-    for (int i = 0; i < args.length; i++) {
-      System.out.print(" " + args[i]);
-    }
-    System.out.println();
     System.err.println("Loading workload...");
 
     //show a warning message that creating the workload is taking a while
     //but only do so if it is taking longer than 2 seconds
     //(showing the message right away if the setup wasn't taking very long was confusing people)
-    Thread warningthread = new Thread() {
+    Thread warningThread = new Thread() {
       public void run() {
         try {
           sleep(2000);
@@ -355,11 +383,10 @@ public class Client {
       }
     };
 
-    warningthread.start();
+    warningThread.start();
 
     //set up measurements
     Measurements.setProperties(props);
-
 
     //load the workload
     ClassLoader classLoader = Client.class.getClassLoader();
@@ -367,34 +394,34 @@ public class Client {
     Workload workload = (Workload) workLoadClass.newInstance();
     workload.init(props);
 
-    warningthread.interrupt();
+    warningThread.interrupt();
 
     //run the workload
 
     System.err.println("Starting test.");
 
-    int opcount;
-    if (dotransactions) {
-      opcount = Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY, "0"));
+    int opCount;
+    if (doTransactions) {
+      opCount = Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY, "0"));
     } else {
       if (props.containsKey(INSERT_COUNT_PROPERTY)) {
-        opcount = Integer.parseInt(props.getProperty(INSERT_COUNT_PROPERTY, "0"));
+        opCount = Integer.parseInt(props.getProperty(INSERT_COUNT_PROPERTY, "0"));
       } else {
-        opcount = Integer.parseInt(props.getProperty(RECORD_COUNT_PROPERTY, "0"));
+        opCount = Integer.parseInt(props.getProperty(RECORD_COUNT_PROPERTY, "0"));
       }
     }
 
     List<RateLimiter<ClientTask>> toDo = Lists.newArrayList();
     for (int threadId = 0; threadId < threadCount; threadId++) {
-      DB db = DBFactory.newDB(dbname, props);
+      DB db = DBFactory.newDB(dbName, props);
       ClientTask task = new ClientTask(db, workload, threadId, threadCount, props);
-      toDo.add(new RateLimiter<ClientTask>(((double)opcount)/ threadCount, targetPerThreadPerMs, task));
+      toDo.add(new RateLimiter<ClientTask>(((double) opCount) / threadCount, targetPerThreadPerMs, task));
     }
 
 
     StatusThread statusthread = null;
 
-    if (status) {
+    if (showStatus) {
       boolean standardStatus = false;
       if (props.getProperty("measurementtype", "").equals("timeseries")) {
         standardStatus = true;
@@ -411,7 +438,7 @@ public class Client {
 
     long end = System.currentTimeMillis();
 
-    if (status) {
+    if (showStatus) {
       statusthread.interrupt();
     }
 
@@ -429,7 +456,7 @@ public class Client {
     }
 
     try {
-      exportMeasurements(props, opcount, end - start);
+      exportMeasurements(props, opCount, end - start);
     } catch (IOException e) {
       System.err.println("Could not export measurements, error: " + e.getMessage());
       e.printStackTrace();
