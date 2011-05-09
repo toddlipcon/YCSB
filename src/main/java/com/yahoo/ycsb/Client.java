@@ -341,7 +341,7 @@ public class Client {
     }
     System.out.println();
 
-    //lg = new LoadGenerator(propfile, zk);
+    //lg = new LoadManager(propfile, zk);
     runTest(props, dotransactions, status, label);
   }
 
