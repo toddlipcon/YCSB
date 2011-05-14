@@ -17,6 +17,7 @@
 
 package com.yahoo.ycsb.workloads;
 
+import java.io.IOException;
 import java.util.*;
 
 import com.yahoo.ycsb.*;

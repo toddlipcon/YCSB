@@ -12,6 +12,7 @@ class ClientTask implements Callable<Integer> {
 
   private DB db;
   private Workload workload;
+  private boolean doTransactions;
 
   private Properties properties;
   private Object workloadState;
@@ -20,10 +21,12 @@ class ClientTask implements Callable<Integer> {
   protected ClientTask() {
   }
 
-  public ClientTask(DB db, Workload workload, int threadId, int threadCount, Properties props) throws DBException, WorkloadException {
+  public ClientTask(DB db, Workload workload, int threadId, int threadCount,
+      Properties props, boolean doTransactions) throws DBException, WorkloadException {
     this.db = db;
     this.workload = workload;
     this.properties = props;
+    this.doTransactions = doTransactions;
 
     db.init();
     workloadState = workload.initThread(properties, threadId, threadCount);
@@ -36,7 +39,14 @@ class ClientTask implements Callable<Integer> {
 
   @Override
   public Integer call() throws DBException {
-    if (!workload.doTransaction(db, workloadState)) {
+    boolean success = false;
+    
+    if (!doTransactions) {
+      success = workload.doInsert(db, workloadState);
+    } else {
+      success = workload.doTransaction(db, workloadState);
+    }
+    if (!success) {
       throw new DBException("Workload says we are done");
     }
     opCompleted();

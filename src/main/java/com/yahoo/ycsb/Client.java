@@ -342,6 +342,7 @@ public class Client {
     System.out.println();
 
     //lg = new LoadManager(propfile, zk);
+   
     runTest(props, dotransactions, status, label);
   }
 
@@ -414,7 +415,7 @@ public class Client {
     List<RateLimiter<ClientTask>> toDo = Lists.newArrayList();
     for (int threadId = 0; threadId < threadCount; threadId++) {
       DB db = DBFactory.newDB(dbName, props);
-      ClientTask task = new ClientTask(db, workload, threadId, threadCount, props);
+      ClientTask task = new ClientTask(db, workload, threadId, threadCount, props, doTransactions);
       toDo.add(new RateLimiter<ClientTask>(((double) opCount) / threadCount, targetPerThreadPerMs, task));
     }
 
