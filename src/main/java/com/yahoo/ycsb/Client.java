@@ -23,6 +23,8 @@ import com.yahoo.ycsb.measurements.Measurements;
 import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
 import com.yahoo.ycsb.measurements.exporter.TextMeasurementsExporter;
 
+import com.yahoo.ycsb.zookeeper.ZooKeeperClient;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -134,6 +136,8 @@ public class Client {
     System.out.println("                  values in the propertyfile");
     System.out.println("  -s:  show status during run (default: no status)");
     System.out.println("  -l label:  use label for status (e.g. to label one experiment out of a whole batch)");
+    System.out.println("  -zktrigger: start trigger file stored in zookeeper");
+    System.out.println("  -zkconnect: zookeeper connect string");
     System.out.println("");
     System.out.println("Required properties:");
     System.out.println("  " + WORKLOAD_PROPERTY + ": the name of the workload class to use (e.g. com.yahoo.ycsb.workloads.CoreWorkload)");
@@ -215,6 +219,9 @@ public class Client {
     String zk = null;
     String propfile = "/ycsb/workload";
 
+    String zkTriggerFile = null;
+    String zkConnect = null;
+
     while (args[argindex].startsWith("-")) {
       if (args[argindex].compareTo("-threads") == 0) {
         argindex++;
@@ -268,8 +275,6 @@ public class Client {
         propfile = args[argindex];
         argindex++;
 
-
-
       } else if (args[argindex].compareTo("-p") == 0) {
         argindex++;
         if (argindex >= args.length) {
@@ -295,6 +300,22 @@ public class Client {
         }
 
         zk = args[argindex];
+        argindex++;
+      } else if (args[argindex].compareTo("-zktrigger") == 0)  {
+        argindex++;
+        if (argindex >= args.length) {
+          usageMessage();
+          System.exit(0);
+        }
+        zkTriggerFile = args[argindex];
+        argindex++;
+      } else if (args[argindex].compareTo("-zkconnect") == 0) {
+        argindex++;
+        if (argindex >= args.length) {
+          usageMessage();
+          System.exit(0);
+        }
+        zkConnect = args[argindex];
         argindex++;
       } else {
         System.out.println("Unknown option " + args[argindex]);
@@ -342,8 +363,25 @@ public class Client {
     System.out.println();
 
     //lg = new LoadManager(propfile, zk);
+
+    if (zkTriggerFile != null) {
+      // Wait for Trigger file to get created
+      if (zkConnect == null) {
+        System.out.println("Please specify ZooKeeper connect string...");
+        System.out.println();
+      }
+      try {
+        ZooKeeperClient zkClient = new ZooKeeperClient(zkConnect, zkTriggerFile);
+      } catch (Exception e) {
+        System.out.println("Error during waiting on zk trigger path " + e);
+        System.exit(1);
+      }
+      // This will wait until file is created
+    }
+      
    
     runTest(props, dotransactions, status, label);
+    System.exit(0);
   }
 
   private static void runTest(Properties props, boolean doTransactions, boolean showStatus, String label)
