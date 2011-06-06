@@ -418,12 +418,12 @@ public class CoreWorkload extends Workload
 	{
 		//choose a random key
 		int keynum;
-		do
+    do
 		{
 			keynum=keychooser.nextInt();
 		}
 		while (keynum>transactioninsertkeysequence.lastInt());
-		
+    
 		if (!orderedinserts)
 		{
 			keynum=Utils.hash(keynum);

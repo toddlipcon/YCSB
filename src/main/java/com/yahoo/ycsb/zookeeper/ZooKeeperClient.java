@@ -1,5 +1,7 @@
 package com.yahoo.ycsb.zookeeper;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
@@ -52,10 +54,13 @@ public class ZooKeeperClient {
   class YCSBWatcher implements Watcher {
     String zkTriggerPath = null;
     Wrapper w = null;
+    AtomicBoolean connected = new AtomicBoolean();
+
     
     public YCSBWatcher(String zkTriggerPath, Wrapper w) {
       this.zkTriggerPath = zkTriggerPath;
       this.w = w;
+      connected.set(false);
     }
     
     
@@ -67,19 +72,24 @@ public class ZooKeeperClient {
     
       if ( event.getState() == KeeperState.SyncConnected ) {
     	  // Connected
+        connected.set(true);
     	}
       if (event.getType() == Event.EventType.None) {
         // Connection state changed
         switch (event.getState()) {
           case SyncConnected:
-            // read ActiveZNodes and make sure we are still active
             break;
           case Expired:
             // Lost connection to ZK
-            
-            System.out.println("Lost ZooKeeper connection. Termination program...");
-            System.exit(1);
-            break;
+            if (connected.get()) {
+              System.out.println("Lost ZooKeeper connection. " +
+              		"Program already started. Ignoring event.");
+              break;
+            } else {
+              System.out.println("Lost ZooKeeper connection. Termination program...");
+              System.exit(1);
+              break;
+            }
         } 
       } else {
         if (path != null &&
