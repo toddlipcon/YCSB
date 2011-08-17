@@ -19,12 +19,12 @@ package com.yahoo.ycsb;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import com.yahoo.ycsb.generator.XORShiftRandom;
 /**
  * Utility functions.
  */
 public class Utils {
-  static Random random = new Random();
+  static Random random = new XORShiftRandom();
   static final AtomicInteger saltCounter = new AtomicInteger(1);
 
   /**
@@ -37,7 +37,7 @@ public class Utils {
 
   public static String testableData(int key, int field, int length, int salt) {
     final int interval = '~' - ' ' + 1;
-    Random r = new Random(hash(salt + hash(key)) + field);
+    Random r = new XORShiftRandom(hash(salt + hash(key)) + field);
 
     byte[] buf = new byte[length];
     r.nextBytes(buf);

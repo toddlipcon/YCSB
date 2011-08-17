@@ -136,7 +136,7 @@ public class ZipfianGenerator extends IntegerGenerator
 		base=min;
 		zipfianconstant=_zipfianconstant;
 
-		random=new Random();	 
+		random=new XORShiftRandom();	 
 
 		theta=zipfianconstant;
 
