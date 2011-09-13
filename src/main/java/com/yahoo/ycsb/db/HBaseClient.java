@@ -317,12 +317,11 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
     try {
       hTable.put(p);
     } catch (IOException e) {
-      if (debug) {
-        System.err.println("Error doing put: " + e);
-      }
+      e.printStackTrace();
       return ServerError;
     } catch (ConcurrentModificationException e) {
       //do nothing for now...hope this is rare
+      e.printStackTrace();
       return ServerError;
     }
 
