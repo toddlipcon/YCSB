@@ -109,16 +109,24 @@ public class OneMeasurementHdrHistogram extends OneMeasurement {
       // we can close now
       log.close();
     }
+
     exporter.write(getName(), "Operations", totalHistogram.getTotalCount());
-    exporter.write(getName(), "AverageLatency(us)", totalHistogram.getMean());
     exporter.write(getName(), "MinLatency(us)", totalHistogram.getMinValue());
     exporter.write(getName(), "MaxLatency(us)", totalHistogram.getMaxValue());
 
-    for (Integer percentile: percentiles) {
-      exporter.write(getName(), ordinal(percentile) + "PercentileLatency(us)", totalHistogram.getValueAtPercentile(percentile));
+    for (int i = 0; i < 2; i++) {
+      boolean corrected = i == 1;
+      String prefix = corrected ? "CO" : "";
+      Histogram h = totalHistogram;
+      if (corrected) {
+        h = h.copyCorrectedForCoordinatedOmission(estimateExpectedInterval());
+      }
+      exporter.write(getName(), prefix + "AverageLatency(us)", h.getMean());
+      for (Integer percentile: percentiles) {
+        exporter.write(getName(), prefix + ordinal(percentile) + "PercentileLatency(us)",
+            h.getValueAtPercentile(percentile));
+      }
     }
-    
-    exportStatusCounts(exporter);
   }
 
 	/**
@@ -137,13 +145,30 @@ public class OneMeasurementHdrHistogram extends OneMeasurement {
 		}
 
 		DecimalFormat d = new DecimalFormat("#.##");
-		return "[" + getName() + ": Count=" + intervalHistogram.getTotalCount() + ", Max="
-				+ intervalHistogram.getMaxValue() + ", Min=" + intervalHistogram.getMinValue() + ", Avg="
-				+ d.format(intervalHistogram.getMean()) + ", 90=" + d.format(intervalHistogram.getValueAtPercentile(90))
-				+ ", 99=" + d.format(intervalHistogram.getValueAtPercentile(99)) + ", 99.9="
-				+ d.format(intervalHistogram.getValueAtPercentile(99.9)) + ", 99.99="
-				+ d.format(intervalHistogram.getValueAtPercentile(99.99)) + "]";
-	}
+    String ret = "[" + getName() + ": Count=" + intervalHistogram.getTotalCount() + ", Max="
+				+ intervalHistogram.getMaxValue() + ", Min=" + intervalHistogram.getMinValue();
+    for (int i = 0; i < 2; i++) {
+      boolean corrected = i == 1;
+      String prefix = corrected ? "CO" : "";
+      Histogram h = intervalHistogram;
+      if (corrected) {
+        h = h.copyCorrectedForCoordinatedOmission(estimateExpectedInterval());
+      }
+      ret = ret
+        + ", " + prefix + "Avg=" + d.format(h.getMean())
+        + ", " + prefix + "90=" + d.format(h.getValueAtPercentile(90))
+				+ ", " + prefix + "99=" + d.format(h.getValueAtPercentile(99))
+        + ", " + prefix + "99.9=" + d.format(h.getValueAtPercentile(99.9))
+        + ", " + prefix + "99.99=" + d.format(h.getValueAtPercentile(99.99));
+    }
+    ret += "]";
+
+		return ret;
+  }
+
+  private long estimateExpectedInterval() {
+    return totalHistogram.getValueAtPercentile(50);
+  }
 
 	private Histogram getIntervalHistogramAndAccumulate() {
 		Histogram intervalHistogram = histogram.getIntervalHistogram();
