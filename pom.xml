@@ -104,6 +104,7 @@ LICENSE file.
     <module>core</module>
     <module>binding-parent</module>
     <!-- all the datastore bindings, lex sorted please -->
+    <!--
     <module>accumulo</module>
     <module>aerospike</module>
     <module>asynchbase</module>
@@ -123,8 +124,10 @@ LICENSE file.
     <module>hypertable</module>
     <module>infinispan</module>
     <module>jdbc</module>
+    -->
     <module>kudu</module>
     <!--<module>mapkeeper</module>-->
+    <!--
     <module>memcached</module>
     <module>mongodb</module>
     <module>nosqldb</module>
@@ -135,6 +138,7 @@ LICENSE file.
     <module>s3</module>
     <module>solr</module>
     <module>tarantool</module>
+    -->
     <!--<module>voldemort</module>-->
   </modules>
 
