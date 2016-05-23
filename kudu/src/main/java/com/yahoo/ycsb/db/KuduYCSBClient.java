@@ -23,9 +23,9 @@ import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.Status;
 import com.yahoo.ycsb.StringByteIterator;
 import com.yahoo.ycsb.workloads.CoreWorkload;
-import org.kududb.ColumnSchema;
-import org.kududb.Schema;
-import org.kududb.client.*;
+import org.apache.kudu.ColumnSchema;
+import org.apache.kudu.Schema;
+import org.apache.kudu.client.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-import static org.kududb.Type.STRING;
+import static org.apache.kudu.Type.STRING;
 
 /**
  * Kudu client for YCSB framework. Example to load: <blockquote>
