@@ -139,7 +139,7 @@ public class RedisClient extends DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     Set<String> keys = jedis.zrangeByScore(INDEX_KEY, hash(startkey),
         Double.POSITIVE_INFINITY, 0, recordcount);

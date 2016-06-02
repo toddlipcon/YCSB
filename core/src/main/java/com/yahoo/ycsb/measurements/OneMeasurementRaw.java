@@ -98,7 +98,7 @@ public class OneMeasurementRaw extends OneMeasurement {
   private long totalLatency = 0;
 
   // A window of stats to print summary for at the next getSummary() call.
-  // It's supposed to be a one line summary, so we will just print count and
+  // It's supposed to be a one line summary, so we will just prlong count and
   // average.
   private int windowOperations = 0;
   private long windowTotalLatency = 0;

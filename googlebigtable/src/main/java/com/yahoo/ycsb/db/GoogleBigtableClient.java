@@ -208,7 +208,7 @@ public class GoogleBigtableClient extends com.yahoo.ycsb.DB {
       filterChain.addFilters(RowFilter.newBuilder()
           .setCellsPerColumnLimitFilter(1)
           .build());
-      int count = 0;
+      long count = 0;
       // usually "field#" so pre-alloc
       final StringBuilder regex = new StringBuilder(fields.size() * 6);
       for (final String field : fields) {
@@ -263,7 +263,7 @@ public class GoogleBigtableClient extends com.yahoo.ycsb.DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     setTable(table);
     
@@ -276,7 +276,7 @@ public class GoogleBigtableClient extends com.yahoo.ycsb.DB {
       filterChain.addFilters(RowFilter.newBuilder()
           .setCellsPerColumnLimitFilter(1)
           .build());
-      int count = 0;
+      long count = 0;
       // usually "field#" so pre-alloc
       final StringBuilder regex = new StringBuilder(fields.size() * 6);
       for (final String field : fields) {

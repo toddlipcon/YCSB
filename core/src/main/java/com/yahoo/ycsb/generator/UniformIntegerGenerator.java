@@ -17,14 +17,13 @@
 
 package com.yahoo.ycsb.generator;
 
-import com.yahoo.ycsb.Utils;
-
+import java.util.concurrent.ThreadLocalRandom;
 /**
  * Generates integers randomly uniform from an interval.
  */
 public class UniformIntegerGenerator extends NumberGenerator 
 {
-	private final int _lb,_ub,_interval;
+	private final long _lb, _ub;
 	
 	/**
 	 * Creates a generator that will return integers uniformly randomly from the interval [lb,ub] inclusive (that is, lb and ub are possible values)
@@ -32,17 +31,16 @@ public class UniformIntegerGenerator extends NumberGenerator
 	 * @param lb the lower bound (inclusive) of generated values
 	 * @param ub the upper bound (inclusive) of generated values
 	 */
-	public UniformIntegerGenerator(int lb, int ub)
+	public UniformIntegerGenerator(long lb, long ub)
 	{
 		_lb=lb;
 		_ub=ub;
-		_interval=_ub-_lb+1;
 	}
 	
 	@Override
-	public Integer nextValue() 
+	public Long nextValue() 
 	{
-		int ret=Utils.random().nextInt(_interval)+_lb;
+		long ret= ThreadLocalRandom.current().nextLong(_lb, _ub + 1);
 		setLastValue(ret);
 		
 		return ret;
@@ -50,6 +48,6 @@ public class UniformIntegerGenerator extends NumberGenerator
 
 	@Override
 	public double mean() {
-		return ((_lb + (long)_ub)) / 2.0;
+		return (_lb + _ub) / 2.0;
 	}
 }

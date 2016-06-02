@@ -361,7 +361,7 @@ public class MongoDbClient extends DB {
    *         class's description for a discussion of error codes.
    */
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     MongoCursor<Document> cursor = null;
     try {

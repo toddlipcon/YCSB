@@ -102,7 +102,7 @@ public abstract class DB
 	 * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
 	 * @return The result of the operation.
 	 */
-	public abstract Status scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String,ByteIterator>> result);
+	public abstract Status scan(String table, String startkey, long recordcount, Set<String> fields, Vector<HashMap<String,ByteIterator>> result);
 	
 	/**
 	 * Update a record in the database. Any field/value pairs in the specified values HashMap will be written into the record with the specified

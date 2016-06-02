@@ -222,7 +222,7 @@ public class KuduYCSBClient extends com.yahoo.ycsb.DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     try {
       KuduScanner.KuduScannerBuilder scannerBuilder =
@@ -273,7 +273,7 @@ public class KuduYCSBClient extends com.yahoo.ycsb.DB {
     return Status.OK;
   }
 
-  private void addAllRowsToResult(RowResultIterator it, int recordcount,
+  private void addAllRowsToResult(RowResultIterator it, long recordcount,
       List<String> querySchema, Vector<HashMap<String, ByteIterator>> result)
           throws Exception {
     RowResult row;

@@ -204,7 +204,7 @@ public class AccumuloClient extends DB {
   }
 
   @Override
-  public Status scan(String t, String startkey, int recordcount,
+  public Status scan(String t, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     try {
       checkTable(t);
@@ -236,7 +236,7 @@ public class AccumuloClient extends DB {
 
     String rowKey = "";
     HashMap<String, ByteIterator> currentHM = null;
-    int count = 0;
+    long count = 0;
 
     // Begin the iteration.
     for (Entry<Key, Value> entry : scanScanner) {

@@ -151,7 +151,7 @@ public class MapKeeperClient extends DB {
     }
 
     @Override
-    public int scan(String table, String startkey, int recordcount,
+    public int scan(String table, String startkey, long recordcount,
             Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
         try {
             //XXX what to pass in for nulls / zeros?

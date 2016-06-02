@@ -329,7 +329,7 @@ public class ElasticsearchClient extends DB {
   public Status scan(
           String table,
           String startkey,
-          int recordcount,
+          long recordcount,
           Set<String> fields,
           Vector<HashMap<String, ByteIterator>> result) {
     try {

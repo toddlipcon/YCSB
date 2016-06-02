@@ -93,7 +93,7 @@ public class TarantoolClient extends DB {
 
   @Override
   public Status scan(String table, String startkey,
-                     int recordcount, Set<String> fields,
+                     long recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
     List<List<String>> response;
     try {

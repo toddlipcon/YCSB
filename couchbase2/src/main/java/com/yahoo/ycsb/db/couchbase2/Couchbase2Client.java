@@ -578,7 +578,7 @@ public class Couchbase2Client extends DB {
   }
 
   @Override
-  public Status scan(final String table, final String startkey, final int recordcount, final Set<String> fields,
+  public Status scan(final String table, final String startkey, final long recordcount, final Set<String> fields,
       final Vector<HashMap<String, ByteIterator>> result) {
     try {
       if (fields == null || fields.isEmpty()) {
@@ -605,7 +605,7 @@ public class Couchbase2Client extends DB {
    * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
    * @return The result of the operation.
    */
-  private Status scanAllFields(final String table, final String startkey, final int recordcount,
+  private Status scanAllFields(final String table, final String startkey, final long recordcount,
       final Vector<HashMap<String, ByteIterator>> result) {
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
 
@@ -666,7 +666,7 @@ public class Couchbase2Client extends DB {
    * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
    * @return The result of the operation.
    */
-  private Status scanSpecificFields(final String table, final String startkey, final int recordcount,
+  private Status scanSpecificFields(final String table, final String startkey, final long recordcount,
       final Set<String> fields, final Vector<HashMap<String, ByteIterator>> result) {
     String scanSpecQuery = "SELECT " + joinFields(fields) + " FROM `" + bucketName
         + "` WHERE meta().id >= '$1' LIMIT $2";
@@ -908,7 +908,7 @@ class BackoffSelectStrategyFactory implements SelectStrategyFactory {
  */
 class BackoffSelectStrategy implements SelectStrategy {
 
-  private int counter = 0;
+  private long counter = 0;
 
   @Override
   public int calculateStrategy(final IntSupplier supplier, final boolean hasTasks) throws Exception {

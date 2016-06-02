@@ -167,7 +167,7 @@ public class DynamoDBClient extends DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
                      Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
 
     if(LOGGER.isDebugEnabled()) {
@@ -197,7 +197,7 @@ public class DynamoDBClient extends DB {
       result.add(extractResult(gres.getItem()));
     }
 
-    int count = 1; // startKey is done, rest to go.
+    long count = 1; // startKey is done, rest to go.
 
     Map<String, AttributeValue> startKey = createPrimaryKey(startkey);
     ScanRequest req = new ScanRequest(table);

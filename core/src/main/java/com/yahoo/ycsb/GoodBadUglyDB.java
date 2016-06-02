@@ -112,7 +112,7 @@ public class GoodBadUglyDB extends DB {
      * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
      * @return Zero on success, a non-zero error code on error
      */
-    public Status scan(String table, String startkey, int recordcount, Set<String> fields,
+    public Status scan(String table, String startkey, long recordcount, Set<String> fields,
             Vector<HashMap<String, ByteIterator>> result) {
         delay();
 

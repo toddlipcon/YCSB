@@ -205,7 +205,7 @@ public class NoSqlDbClient extends DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     System.err.println("Oracle NoSQL Database does not support Scan semantics");
     return Status.ERROR;

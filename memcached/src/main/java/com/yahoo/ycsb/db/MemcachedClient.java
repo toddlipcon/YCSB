@@ -188,7 +188,7 @@ public class MemcachedClient extends DB {
 
   @Override
   public Status scan(
-      String table, String startkey, int recordcount, Set<String> fields,
+      String table, String startkey, long recordcount, Set<String> fields,
       Vector<HashMap<String, ByteIterator>> result){
     return Status.NOT_IMPLEMENTED;
   }

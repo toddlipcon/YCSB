@@ -201,7 +201,7 @@ public class CouchbaseClient extends DB {
   }
 
   @Override
-  public Status scan(final String table, final String startkey, final int recordcount, final Set<String> fields,
+  public Status scan(final String table, final String startkey, final long recordcount, final Set<String> fields,
                      final Vector<HashMap<String, ByteIterator>> result) {
     try {
       Query query = new Query().setRangeStart(startkey)

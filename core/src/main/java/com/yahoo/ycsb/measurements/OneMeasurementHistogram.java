@@ -136,7 +136,7 @@ public class OneMeasurementHistogram extends OneMeasurement
     exporter.write(getName(), "MinLatency(us)", min);
     exporter.write(getName(), "MaxLatency(us)", max);
 
-    int opcounter=0;
+    long opcounter=0;
     boolean done95th=false;
     for (int i=0; i<_buckets; i++)
     {

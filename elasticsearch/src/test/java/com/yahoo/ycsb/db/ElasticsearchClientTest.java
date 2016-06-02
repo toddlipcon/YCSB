@@ -140,7 +140,7 @@ public class ElasticsearchClientTest {
     @Test
     public void testScan() {
         System.out.println("scan");
-        int recordcount = 10;
+        long recordcount = 10;
         Set<String> fields = MOCK_DATA.keySet();
         Vector<HashMap<String, ByteIterator>> resultParam = new Vector<HashMap<String, ByteIterator>>(10);
         Status result = instance.scan(MOCK_TABLE, MOCK_KEY1, recordcount, fields, resultParam);

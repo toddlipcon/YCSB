@@ -162,7 +162,7 @@ public class AsyncMongoDbClient extends DB {
    */
   @Override
   public final void init() throws DBException {
-    final int count = INIT_COUNT.incrementAndGet();
+    final long count = INIT_COUNT.incrementAndGet();
 
     synchronized (AsyncMongoDbClient.class) {
       final Properties props = getProperties();
@@ -389,7 +389,7 @@ public class AsyncMongoDbClient extends DB {
    */
   @Override
   public final Status scan(final String table, final String startkey,
-      final int recordcount, final Set<String> fields,
+      final long recordcount, final Set<String> fields,
       final Vector<HashMap<String, ByteIterator>> result) {
     try {
       final MongoCollection collection = database.getCollection(table);

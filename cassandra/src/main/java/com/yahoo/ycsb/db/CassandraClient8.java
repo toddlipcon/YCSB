@@ -267,7 +267,7 @@ public class CassandraClient8 extends DB {
    *          pairs for one record
    * @return Zero on success, a non-zero error code on error
    */
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     if (!tableName.equals(table)) {
       try {

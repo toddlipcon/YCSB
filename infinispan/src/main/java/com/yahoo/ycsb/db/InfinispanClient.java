@@ -92,7 +92,7 @@ public class InfinispanClient extends DB {
     }
   }
 
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     LOGGER.warn("Infinispan does not support scan semantics");
     return Status.OK;

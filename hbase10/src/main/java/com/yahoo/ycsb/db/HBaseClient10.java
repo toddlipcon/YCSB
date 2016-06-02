@@ -321,7 +321,7 @@ public class HBaseClient10 extends com.yahoo.ycsb.DB {
    * @return Zero on success, a non-zero error code on error
    */
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     // if this is a "new" table, init HTable object. Else, use existing one
     if (!tableName.equals(table)) {

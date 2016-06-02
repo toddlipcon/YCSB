@@ -48,7 +48,7 @@ public class UniformGenerator extends Generator<String>
 	@Override
   public String nextValue()
 	{
-		_laststring = _values.get(_gen.nextValue());
+		_laststring = _values.get((int)_gen.nextValue().longValue());
 		return _laststring;
 	}
 	

@@ -127,7 +127,7 @@ public class AerospikeClient extends com.yahoo.ycsb.DB {
   }
 
   @Override
-  public Status scan(String table, String start, int count, Set<String> fields,
+  public Status scan(String table, String start, long count, Set<String> fields,
       Vector<HashMap<String, ByteIterator>> result) {
     System.err.println("Scan not implemented");
     return Status.ERROR;

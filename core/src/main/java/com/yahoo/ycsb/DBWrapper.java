@@ -167,7 +167,7 @@ public class DBWrapper extends DB
    * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
    * @return The result of the operation.
    */
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String,ByteIterator>> result)
   {
     try (final TraceScope span = _tracer.newScope(SCOPE_STRING_SCAN)) {

@@ -137,7 +137,7 @@ public class GeodeClient extends DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
                      Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     // Geode does not support scan
     return Status.ERROR;

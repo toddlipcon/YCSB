@@ -261,7 +261,7 @@ public class SolrClient extends DB {
    *         discussion of error codes.
    */
   @Override
-  public Status scan(String table, String startkey, int recordcount, Set<String> fields,
+  public Status scan(String table, String startkey, long recordcount, Set<String> fields,
       Vector<HashMap<String, ByteIterator>> result) {
     try {
       Boolean returnFields = false;

@@ -77,7 +77,7 @@ The methods that you need to implement are:
   public int read(String table, String key, Set<String> fields, HashMap<String,String> result);
 
   //Perform a range scan
-  public int scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String,String>> result);
+  public int scan(String table, String startkey, long recordcount, Set<String> fields, Vector<HashMap<String,String>> result);
 	
   //Update a single record
   public int update(String table, String key, HashMap<String,String> values);

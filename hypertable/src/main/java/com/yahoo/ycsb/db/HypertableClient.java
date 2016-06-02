@@ -178,7 +178,7 @@ public class HypertableClient extends com.yahoo.ycsb.DB {
    * @return Zero on success, a non-zero error code on error
    */
   @Override
-  public Status scan(String table, String startkey, int recordcount,
+  public Status scan(String table, String startkey, long recordcount,
       Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     // SELECT _columnFamily:fields FROM table WHERE (ROW >= startkey)
     // LIMIT recordcount MAX_VERSIONS 1;

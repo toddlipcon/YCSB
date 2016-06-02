@@ -205,7 +205,7 @@ public class AccumuloTest {
     Thread.sleep(2000);
     LOG.debug("verify number of cells");
     final Scanner scanner = cluster.getConnector("root", "protectyaneck").createScanner(CoreWorkload.TABLENAME_PROPERTY_DEFAULT, Authorizations.EMPTY);
-    int count = 0;
+    long count = 0;
     for (Entry<Key, Value> entry : scanner) {
       count++;
     }

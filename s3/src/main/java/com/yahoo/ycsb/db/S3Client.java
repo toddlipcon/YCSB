@@ -126,10 +126,10 @@ public class S3Client extends DB {
   */
   @Override
   public void init() throws DBException {
-    final int count = INIT_COUNT.incrementAndGet();
+    final long count = INIT_COUNT.incrementAndGet();
     synchronized (S3Client.class){
       Properties propsCL = getProperties();
-      int recordcount = Integer.parseInt(
+      long recordcount = Integer.parseInt(
           propsCL.getProperty("recordcount"));
       int operationcount = Integer.parseInt(
           propsCL.getProperty("operationcount"));
@@ -317,7 +317,7 @@ public class S3Client extends DB {
   * @return OK on success, ERROR otherwise.
   */
   @Override
-  public Status scan(String bucket, String startkey, int recordcount,
+  public Status scan(String bucket, String startkey, long recordcount,
         Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     return scanFromStorage(bucket, startkey, recordcount, result, ssecKey);
   }
@@ -478,10 +478,10 @@ public class S3Client extends DB {
   *
   */
   protected Status scanFromStorage(String bucket, String startkey,
-      int recordcount, Vector<HashMap<String, ByteIterator>> result,
+      long recordcount, Vector<HashMap<String, ByteIterator>> result,
           SSECustomerKey ssecLocal) {
 
-    int counter = 0;
+    long counter = 0;
     ObjectListing listing = s3Client.listObjects(bucket);
     List<S3ObjectSummary> summaries = listing.getObjectSummaries();
     List<String> keyList = new ArrayList();

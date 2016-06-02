@@ -428,7 +428,7 @@ public class JdbcDBClient extends DB {
   }
 
   @Override
-  public Status scan(String tableName, String startKey, int recordcount, Set<String> fields,
+  public Status scan(String tableName, String startKey, long recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
     try {
       StatementType type = new StatementType(StatementType.Type.SCAN, tableName, 1, "", getShardIndexByKey(startKey));
@@ -549,7 +549,7 @@ public class JdbcDBClient extends DB {
   private OrderedFieldInfo getFieldInfo(HashMap<String, ByteIterator> values) {
     String fieldKeys = "";
     List<String> fieldValues = new ArrayList();
-    int count = 0;
+    long count = 0;
     for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
       fieldKeys += entry.getKey();
       if (count < values.size() - 1) {

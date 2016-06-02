@@ -263,7 +263,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB
      * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
      * @return Zero on success, a non-zero error code on error
      */
-    public Status scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String,ByteIterator>> result)
+    public Status scan(String table, String startkey, long recordcount, Set<String> fields, Vector<HashMap<String,ByteIterator>> result)
     {
         //if this is a "new" table, init HTable object.  Else, use existing one
         if (!_table.equals(table)) {
@@ -478,14 +478,14 @@ public class HBaseClient extends com.yahoo.ycsb.DB
             System.exit(0);
         }
 
-        final int keyspace=10000; //120000000;
+        final long keyspace=10000; //120000000;
 
         final int threadcount=Integer.parseInt(args[0]);
 
         final String columnfamily=args[1];
 
 
-        final int opcount=Integer.parseInt(args[2])/threadcount;
+        final long opcount=Long.parseLong(args[2])/threadcount;
 
         Vector<Thread> allthreads=new Vector<Thread>();
 
@@ -512,9 +512,9 @@ public class HBaseClient extends com.yahoo.ycsb.DB
 
                         long accum=0;
 
-                        for (int i=0; i<opcount; i++)
+                        for (long i=0; i<opcount; i++)
                         {
-                            int keynum=random.nextInt(keyspace);
+                            long keynum=random.nextLong(keyspace);
                             String key="user"+keynum;
                             long st=System.currentTimeMillis();
                             Status result;
