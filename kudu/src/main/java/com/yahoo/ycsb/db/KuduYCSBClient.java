@@ -99,7 +99,8 @@ public class KuduYCSBClient extends com.yahoo.ycsb.DB {
     if (getProperties().getProperty(SYNC_OPS_OPT) != null
         && getProperties().getProperty(SYNC_OPS_OPT).equals("false")) {
       this.session.setFlushMode(KuduSession.FlushMode.AUTO_FLUSH_BACKGROUND);
-      this.session.setMutationBufferSpace(100);
+      this.session.setMutationBufferSpace(
+        getIntFromProp(getProperties(), "kudu_buffer_num_ops", 2000));
     } else {
       this.session.setFlushMode(KuduSession.FlushMode.AUTO_FLUSH_SYNC);
     }
